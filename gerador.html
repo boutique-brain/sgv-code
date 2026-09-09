@@ -193,7 +193,7 @@
             <div class="campo"><label>Veste</label><input id="in-veste" type="text" placeholder="~4 anos" maxlength="18"></div>
             <div class="campo"><label>R$</label><input id="in-valor" type="text" value="25" maxlength="10"></div>
           </div>
-          <div class="campo"><label>Preço novo de referência (mostra a economia) — opcional</label><input id="in-precoref" type="text" placeholder="ex.: 120" maxlength="10"></div>
+          <div class="campo"><label>Preço novo de referência (mostra a economia) — opcional</label><input id="in-precoref" type="text" placeholder="ex.: 120" maxlength="10"><span class="mini-toggle" id="btn-preco" style="margin-top:6px">🔎 buscar preço de mercado</span></div>
         </div>
       </div>
 
@@ -427,11 +427,19 @@
     var M={'inf-menina':['moda','inf'],'inf-menino':['moda','inf'],'adulto-mulher':['moda','fem'],'adulto-homem':['moda','masc'],'calcados':['sapatos','']};
     catalogo.forEach(function(p){var c=p.campos||(p.campos={});var cur=c['in-categoria']||'';if(M[cur]){c['in-categoria']=M[cur][0];c['in-subcat']=M[cur][1];}if(c['in-subcat']==null)c['in-subcat']='';});
   }
-  function prefixoCat(k){var m={moda:'MOD',uniforme:'UNI',sapatos:'SAP',acessorios:'ACE',brinquedo:'BRI',livros:'LIV',objetos:'OBJ',achadinhos:'ACH'};return m[k]||'GER';}
-  function proximoCodigo(k){var pref=prefixoCat(k),max=0,re=new RegExp('^'+pref+'(\\d{6})$');
+  function prefixoDe(cat,sub){
+    if(cat==='moda'){return sub==='fem'?'MOF':sub==='masc'?'MOM':sub==='inf'?'MOI':'MOD';}
+    var m={uniforme:'UNF',sapatos:'SPT',acessorios:'ACS',brinquedo:'BQD',livros:'LVR',objetos:'OBC',achadinhos:'ACH'};
+    return m[cat]||'GER';
+  }
+  function proximoCodigo(cat,sub){var pref=prefixoDe(cat,sub),max=0,re=new RegExp('^'+pref+'(\\d{6})$');
     catalogo.forEach(function(p){var cod=(p.campos&&p.campos['in-codigo'])||'';var m=cod.match(re);if(m){var n=parseInt(m[1],10);if(n>max)max=n;}});
     return pref+('000000'+(max+1)).slice(-6);}
-  function codificarTodos(){catalogo.forEach(function(p){var c=p.campos||(p.campos={});if(!c['in-codigo'])c['in-codigo']=proximoCodigo(c['in-categoria']||'');});}
+  function sincronizarCodigos(){
+    var mx={};
+    catalogo.forEach(function(p){var c=p.campos||(p.campos={});var exp=prefixoDe(c['in-categoria']||'',c['in-subcat']||'');var cod=c['in-codigo']||'';var m=cod.match(new RegExp('^'+exp+'(\\d{6})$'));if(m){var n=parseInt(m[1],10);if(!mx[exp]||n>mx[exp])mx[exp]=n;}});
+    catalogo.forEach(function(p){var c=p.campos;var exp=prefixoDe(c['in-categoria']||'',c['in-subcat']||'');var cod=c['in-codigo']||'';if(!(new RegExp('^'+exp+'\\d{6}$').test(cod))){var nx=(mx[exp]||0)+1;mx[exp]=nx;c['in-codigo']=exp+('000000'+nx).slice(-6);}});
+  }
   function statusDe(p){var s=(p.selo||'');if(s==='vendido')return 'vendido';if(s==='reservado')return 'reservado';return 'disponivel';}
   function ordenar(){catalogo.sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt',{sensitivity:'base',numeric:true}));}
   function coletar(){
@@ -465,13 +473,15 @@
     clearTimeout(flash._t);flash._t=setTimeout(()=>{s.style.color='';},2600);}
   function salvar(){
     var codEl=document.getElementById('in-codigo');
-    if(!codEl.value.trim()){codEl.value=proximoCodigo(document.getElementById('in-categoria').value||'');}
+    var cat=document.getElementById('in-categoria').value||'',sub=document.getElementById('in-subcat').value||'';
+    if(!codEl.value.trim()){codEl.value=proximoCodigo(cat,sub);}
     const p=coletar();
     const idx=catalogo.findIndex(x=>String(x.nome).toLowerCase()===p.nome.toLowerCase());
     if(idx>=0){catalogo[idx]=p;}else{catalogo.push(p);}
-    ordenar();persistir();
+    sincronizarCodigos();ordenar();persistir();
     const i=catalogo.findIndex(x=>String(x.nome).toLowerCase()===p.nome.toLowerCase());
-    refreshSelect(i);flash('✓ “'+p.nome+'” salvo no catálogo');
+    if(i>=0&&catalogo[i].campos['in-codigo'])codEl.value=catalogo[i].campos['in-codigo'];
+    refreshSelect(i);flash('✓ “'+p.nome+'” salvo ('+codEl.value+')');
   }
   function excluir(){
     const s=document.getElementById('cat-select');const v=s.value;if(v==='')return flash('Selecione um produto pra excluir.');
@@ -487,14 +497,15 @@
   document.getElementById('btn-backup').addEventListener('click',backup);
   document.getElementById('cat-select').addEventListener('change',e=>{const v=e.target.value;if(v==='')return;aplicarProduto(catalogo[+v]);});
   document.getElementById('cat-filtro').addEventListener('change',function(){refreshSelect('');});
+  document.getElementById('btn-preco').addEventListener('click',function(){var t=(document.getElementById('in-titulo').value||'').trim();if(!t)return flash('Preencha o título da peça primeiro.');window.open('https://www.google.com/search?tbm=shop&q='+encodeURIComponent(t+' novo'),'_blank');});
   document.getElementById('cat-file').addEventListener('change',function(){
     const f=this.files[0];if(!f)return;const r=new FileReader();
-    r.onload=e=>{try{const arr=JSON.parse(e.target.result);if(Array.isArray(arr)){catalogo=arr;migrarCategorias();codificarTodos();ordenar();persistir();refreshSelect('');flash('Catálogo restaurado ✓ ('+arr.length+' itens, em ordem A-Z)');}else{flash('Arquivo inválido.');}}catch(err){flash('Arquivo inválido.');}};
+    r.onload=e=>{try{const arr=JSON.parse(e.target.result);if(Array.isArray(arr)){catalogo=arr;migrarCategorias();sincronizarCodigos();ordenar();persistir();refreshSelect('');flash('Catálogo restaurado ✓ ('+arr.length+' itens, em ordem A-Z)');}else{flash('Arquivo inválido.');}}catch(err){flash('Arquivo inválido.');}};
     r.readAsText(f);this.value='';
   });
   try{const raw=localStorage.getItem('brechoCatalogo');if(raw){const a=JSON.parse(raw);if(Array.isArray(a))catalogo=a;}}catch(e){}
   if(!catalogo.length && Array.isArray(SEED) && SEED.length){catalogo=SEED.slice();try{persistir();}catch(e){}}
-  migrarCategorias();codificarTodos();persistir();ordenar();refreshSelect('');
+  migrarCategorias();sincronizarCodigos();persistir();ordenar();refreshSelect('');
   if(!catalogo.length){document.getElementById('cat-status').textContent='Catálogo vazio neste arquivo — clique em 📁 Restaurar e escolha seu backup.';}
 
   /* ---------- VITRINE (página pro cliente, conteúdo estático) ---------- */
