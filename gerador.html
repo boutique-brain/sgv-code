@@ -302,10 +302,12 @@
   const CATS=[
     {k:'moda',n:'Moda',e:'👗'},
     {k:'uniforme',n:'Uniforme',e:'🎽'},
-    {k:'brinquedo',n:'Brinquedos',e:'🧸'},
-    {k:'calcados',n:'Calçados',e:'👟'},
+    {k:'sapatos',n:'Sapatos',e:'👟'},
     {k:'acessorios',n:'Acessórios',e:'👜'},
-    {k:'objetos',n:'Objetos & casa',e:'🏠'}
+    {k:'brinquedo',n:'Brinquedos',e:'🧸'},
+    {k:'livros',n:'Livros',e:'📚'},
+    {k:'objetos',n:'Objetos & casa',e:'🏠'},
+    {k:'achadinhos',n:'Achadinhos',e:'✨'}
   ];
   const SUBS=[{k:'fem',n:'Feminino',e:'👗'},{k:'masc',n:'Masculino',e:'👔'},{k:'inf',n:'Infantil',e:'🧒'}];
   (function(){var s=document.getElementById('in-categoria');
@@ -414,7 +416,7 @@
   const DEFAULTS={'in-cap1':'no flat lay','in-cap2':'no manequim','in-rotulo':'Nº / Manequim'};
   let catalogo=[];
   function migrarCategorias(){
-    var M={'inf-menina':['moda','inf'],'inf-menino':['moda','inf'],'adulto-mulher':['moda','fem'],'adulto-homem':['moda','masc']};
+    var M={'inf-menina':['moda','inf'],'inf-menino':['moda','inf'],'adulto-mulher':['moda','fem'],'adulto-homem':['moda','masc'],'calcados':['sapatos','']};
     catalogo.forEach(function(p){var c=p.campos||(p.campos={});var cur=c['in-categoria']||'';if(M[cur]){c['in-categoria']=M[cur][0];c['in-subcat']=M[cur][1];}if(c['in-subcat']==null)c['in-subcat']='';});
   }
   function ordenar(){catalogo.sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt',{sensitivity:'base',numeric:true}));}
