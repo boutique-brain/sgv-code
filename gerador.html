@@ -166,6 +166,7 @@
             <option value="todos">Mostrar: Todas</option>
           </select>
           <select id="cat-select" class="cat-select"><option value="">— novo produto —</option></select>
+          <button type="button" class="cat-btn" id="btn-nova" style="width:100%;margin-bottom:8px">➕ Nova peça (limpar formulário)</button>
           <div class="cat-botoes">
             <button type="button" class="cat-btn salvar" id="btn-salvar">💾 Salvar</button>
             <button type="button" class="cat-btn" id="btn-excluir">🗑 Excluir</button>
@@ -471,17 +472,26 @@
   }
   function flash(msg){const s=document.getElementById('cat-status');s.textContent=msg;s.style.color='#5c6b3d';
     clearTimeout(flash._t);flash._t=setTimeout(()=>{s.style.color='';},2600);}
+  function novaPeca(){
+    var keep={'in-tag':1,'in-nome':1,'in-contato':1};
+    CAMPOS.forEach(function(id){if(keep[id])return;var el=document.getElementById(id);el.value=(DEFAULTS[id]||'');el.dispatchEvent(new Event('input'));});
+    applySelo('');applyFotos(2);setFoto(1,'');setFoto(2,'');toggleSub();
+    document.getElementById('cat-select').value='';recompute();
+  }
   function salvar(){
     var codEl=document.getElementById('in-codigo');
     var cat=document.getElementById('in-categoria').value||'',sub=document.getElementById('in-subcat').value||'';
-    if(!codEl.value.trim()){codEl.value=proximoCodigo(cat,sub);}
+    var wasNew=!codEl.value.trim();
+    if(wasNew){codEl.value=proximoCodigo(cat,sub);}
     const p=coletar();
-    const idx=catalogo.findIndex(x=>String(x.nome).toLowerCase()===p.nome.toLowerCase());
+    const cod=p.campos['in-codigo'];
+    const idx=catalogo.findIndex(x=>((x.campos&&x.campos['in-codigo'])||'')===cod);
     if(idx>=0){catalogo[idx]=p;}else{catalogo.push(p);}
     sincronizarCodigos();ordenar();persistir();
-    const i=catalogo.findIndex(x=>String(x.nome).toLowerCase()===p.nome.toLowerCase());
-    if(i>=0&&catalogo[i].campos['in-codigo'])codEl.value=catalogo[i].campos['in-codigo'];
-    refreshSelect(i);flash('✓ “'+p.nome+'” salvo ('+codEl.value+')');
+    const j=catalogo.findIndex(x=>String(x.nome).toLowerCase()===p.nome.toLowerCase());
+    const finalCod=(j>=0&&catalogo[j].campos['in-codigo'])||cod;
+    if(wasNew){refreshSelect('');novaPeca();flash('✓ salvo ('+finalCod+') — pronto pra próxima peça');}
+    else{if(j>=0)codEl.value=finalCod;refreshSelect(j);flash('✓ atualizado ('+finalCod+')');}
   }
   function excluir(){
     const s=document.getElementById('cat-select');const v=s.value;if(v==='')return flash('Selecione um produto pra excluir.');
@@ -495,7 +505,8 @@
   document.getElementById('btn-salvar').addEventListener('click',salvar);
   document.getElementById('btn-excluir').addEventListener('click',excluir);
   document.getElementById('btn-backup').addEventListener('click',backup);
-  document.getElementById('cat-select').addEventListener('change',e=>{const v=e.target.value;if(v==='')return;aplicarProduto(catalogo[+v]);});
+  document.getElementById('cat-select').addEventListener('change',e=>{const v=e.target.value;if(v===''){novaPeca();return;}aplicarProduto(catalogo[+v]);});
+  document.getElementById('btn-nova').addEventListener('click',novaPeca);
   document.getElementById('cat-filtro').addEventListener('change',function(){refreshSelect('');});
   document.getElementById('btn-preco').addEventListener('click',function(){var t=(document.getElementById('in-titulo').value||'').trim();if(!t)return flash('Preencha o título da peça primeiro.');window.open('https://www.google.com/search?tbm=shop&q='+encodeURIComponent(t+' novo'),'_blank');});
   document.getElementById('cat-file').addEventListener('change',function(){
