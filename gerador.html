@@ -558,6 +558,7 @@
         L.push(i+'. '+it.nome+(it.cod?(' ('+it.cod+')'):'')+(it.preco>0?(' — '+fmt(sub)):' — a combinar'));i++;});
       L.push('');L.push('💰 Total: '+fmt(t));
       var im=impacto();L.push('');L.push('👏🏻 Parabéns pela sua atitude de reuso! Com esta compra você poupou do nosso 🌎: ~'+miL(im.ag)+' L de água e ~'+miL(im.co)+' kg de CO₂ 💚🌱');
+      if(im.save>0)L.push('💰 Você economizou '+fmt(im.save)+(im.pct>0?(', sendo esta compra '+im.pct+'% mais barata que peças novas 🏷️'):'')+'.');
       return 'https://wa.me/'+WA+'?text='+encodeURIComponent(L.join('\n'));}
     function render(){var ks=keys();list.innerHTML='';
       ks.forEach(function(k){var it=cart[k];var row=document.createElement('div');row.className='crow';
@@ -570,9 +571,8 @@
         ecoEl.hidden=false;
         ecoEl.innerHTML='<div class="ecoh">🎉 Parabéns pela escolha consciente!</div>'
           +'<div class="ecol">Ao reusar '+tt.q+(tt.q===1?' peça':' peças')+', você ajuda o planeta:</div>'
-          +'<div class="ecogr"><span>💧 ~'+miL(im.ag)+' L<small>de água</small></span><span>🌱 ~'+miL(im.co)+' kg<small>de CO₂</small></span>'
-          +(im.pct>0?('<span>🏷️ '+im.pct+'%<small>vs. novo</small></span>'):'')+'</div>'
-          +(im.save>0?('<div class="ecos">Você economiza '+fmt(im.save)+' comprando reuso 💚</div>'):'');
+          +'<div class="ecogr"><span>💧 ~'+miL(im.ag)+' L<small>de água</small></span><span>🌱 ~'+miL(im.co)+' kg<small>de CO₂</small></span></div>'
+          +(im.save>0?('<div class="ecos">Você economizou '+fmt(im.save)+(im.pct>0?(', sendo esta compra '+im.pct+'% mais barata que peças novas'):'')+' 💚</div>'):'');
       }else{ecoEl.hidden=true;}
       if(ks.length){badge.hidden=false;badge.textContent=tt.q;}
       else{badge.hidden=true;}
