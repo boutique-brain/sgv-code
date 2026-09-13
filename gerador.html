@@ -620,7 +620,7 @@
     var slogan=document.getElementById('in-tag').value,comp=document.getElementById('in-nome').value,contato=document.getElementById('in-contato').value;
     var nameOf={},emoOf={};CATS.forEach(function(c){nameOf[c.k]=c.n;emoOf[c.k]=c.e;});
     var subName={},subEmo={};SUBS.forEach(function(c){subName[c.k]=c.n;subEmo[c.k]=c.e;});
-    var itens=catalogo.filter(function(p){return (p.selo||'')!=='vendido';}).map(function(p){
+    var itens=catalogo.map(function(p){
       var c=p.campos||{};
       return {nome:c['in-titulo']||p.nome||'Peça',desc:c['in-desc']||'',codigo:c['in-codigo']||'',cat:c['in-categoria']||'',sub:c['in-subcat']||'',valor:c['in-valor']||'',precoref:c['in-precoref']||'',rot:c['in-rotulo']||'',tam:c['in-tam']||'',veste:c['in-veste']||'',foto1:(p.fotos&&p.fotos[1])||'',foto2:(p.fotos&&p.fotos[2])||'',sinopse:c['in-sinopse']||'',sold:(p.selo||'')==='vendido'};
     });
