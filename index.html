@@ -23,6 +23,18 @@
 .vlogoh img{width:100%;height:auto;display:block;-webkit-mask-image:radial-gradient(ellipse 66% 64% at 50% 52%,#000 58%,transparent 100%);mask-image:radial-gradient(ellipse 66% 64% at 50% 52%,#000 58%,transparent 100%)}
 .vhd.vlogo .vzap{margin-top:6px}
 @media(max-width:640px){.vhd.vlogo{padding-top:52px}}
+.vbusca{position:sticky;top:0;z-index:50;background:#1a130a;padding:10px 12px;border-bottom:3px solid #c9a24a;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.vsbox{position:relative;max-width:640px;margin:0 auto}
+.vsbox input{width:100%;height:46px;border:none;border-radius:10px;padding:0 44px 0 42px;font-size:16px;color:#3a2a1c;background:#fff;box-shadow:inset 0 0 0 2px #e7c46c;-webkit-appearance:none;appearance:none}
+.vsbox input:focus{outline:none;box-shadow:inset 0 0 0 3px #f0b429}
+.vsbox input::-webkit-search-cancel-button{display:none}
+.vsico{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:17px;opacity:.7;pointer-events:none}
+.vsx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:none;border-radius:50%;background:#f1e7d3;color:#6d5137;font-size:14px;cursor:pointer}
+.vsres{max-width:1100px;margin:12px auto 0;padding:0 16px;font-size:14px;color:var(--marrom2)}
+.vsres b{color:var(--marrom)}
+.card.qhide{display:none!important}
+.qvazio{grid-column:1/-1;text-align:center;padding:30px 12px;color:var(--marrom2);font-size:15px;line-height:1.5}
+@media(max-width:640px){.vbusca{padding-right:150px}.vhd.vlogo{padding-top:12px}.carttop{top:14px!important}}
 .slide img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
 .restag{position:absolute;top:8px;left:8px;z-index:3;background:#cf821d;color:#fff;font-size:11px;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .vstate{max-width:520px;margin:40px auto;text-align:center;color:var(--marrom2);font-size:15px;line-height:1.5;padding:0 16px}
@@ -36,6 +48,8 @@
 </head>
 <body>
 <header class="vhd vlogo"><h1 class="vlogoh"><img src="logo-1200.webp" srcset="logo-720.webp 720w, logo-1200.webp 1200w" sizes="(max-width:640px) 100vw, 470px" width="1200" height="800" alt="Baú de Achadinhos — tudo o que é um achado, em um só lugar" fetchpriority="high"></h1><a class="vzap" id="vzap" href="#" target="_blank" rel="noopener" hidden>📲 Falar no WhatsApp</a></header>
+<div class="vbusca" id="vbusca" role="search"><div class="vsbox"><span class="vsico" aria-hidden="true">🔍</span><input type="search" id="q" placeholder="Buscar peças, livros, marcas e achadinhos…" autocomplete="off" enterkeyhint="search" aria-label="Buscar no Baú"><button type="button" class="vsx" id="qx" aria-label="limpar busca" hidden>✕</button></div></div>
+<div class="vsres" id="qres" hidden></div>
 <div id="catalogo"><div class="vstate"><div class="spin"></div>Abrindo o baú…</div></div>
 <button type="button" class="carttop" id="carttop"><span class="ctico">🛒</span><span class="cttxt">SEU PEDIDO</span><span class="ctbadge" id="ctbadge" hidden>0</span></button>
 <div class="cartov" id="cartov" hidden></div>
@@ -60,6 +74,7 @@
   function mil(n){try{return Math.round(n).toLocaleString('pt-BR');}catch(e){return ''+Math.round(n);}}
   function foto(p,thumb){if(!p)return '';var f=thumb?p.replace(/\.(\w+)$/,'-t.$1'):p;return URL_+'/storage/v1/object/public/'+BUCKET+'/'+f.split('/').map(encodeURIComponent).join('/');}
   function dataBR(t){try{var d=new Date(t);return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);}catch(e){return '';}}
+  function norm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();}
   function api(path){return fetch(URL_+'/rest/v1/'+path,{headers:{apikey:KEY,Authorization:'Bearer '+KEY}}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();});}
   function estado(msg){document.getElementById('catalogo').innerHTML='<div class="vstate">'+msg+'</div>';}
 
@@ -104,7 +119,8 @@
       var val=Number(d.preco)||0,ref=Number(d.preco_ref)||0,ph;
       if(ref>val&&val>0)ph='<div class="cprice"><span class="pold">'+preco(ref)+'</span> '+preco(val)+' <span class="psave">-'+Math.round((1-val/ref)*100)+'%</span></div>';
       else ph='<div class="cprice">'+(val?preco(val):'a combinar')+'</div>';
-      return '<div class="card" data-cat="'+(nameOf[d.categoria]?d.categoria:'__o')+'" data-sub="'+esc(d.subcategoria||'')+'">'
+      var qtxt=norm([d.titulo,d.descricao,d.codigo,d.tamanho,d.veste,d.loja,tagTxt,nameOf[d.categoria],d.sinopse].join(' '));
+      return '<div class="card" data-cat="'+(nameOf[d.categoria]?d.categoria:'__o')+'" data-sub="'+esc(d.subcategoria||'')+'" data-q="'+esc(qtxt)+'">'
         +(d.status==='reservado'?'<span class="restag">RESERVADO</span>':'')
         +'<div class="cmedia"><div class="carousel">'+slides+'</div>'+navs+hint+'</div><div class="cbody">'
         +(tagTxt?'<span class="ctag">'+esc(tagTxt)+'</span>':'')
@@ -124,6 +140,7 @@
     // tira do carrinho peças que já foram vendidas
     try{var cart=JSON.parse(localStorage.getItem('brechoCarrinho')||'{}')||{},ok={},mud=false;itens.forEach(function(d){ok[d.codigo]=1;});
       Object.keys(cart).forEach(function(k){if(!ok[k]){delete cart[k];mud=true;}});if(mud)localStorage.setItem('brechoCarrinho',JSON.stringify(cart));}catch(e){}
+    aplicarBusca();
     (function vitrineNav(){
     var bs=document.querySelectorAll('.cnav');
     for(var i=0;i<bs.length;i++){(function(btn){btn.addEventListener('click',function(e){
@@ -187,6 +204,28 @@
     render();
   })();
   }
+  // ---- busca global (como no Mercado Livre): procura em todas as categorias
+  var qIn=document.getElementById('q'),qX=document.getElementById('qx'),qRes=document.getElementById('qres'),qT=null;
+  function aplicarBusca(){
+    var raw=qIn.value,termos=norm(raw).split(' ').filter(Boolean),cards=document.querySelectorAll('.grid .card');
+    qX.hidden=!raw;
+    var grid=document.querySelector('.grid');if(!grid)return;
+    var vz=grid.querySelector('.qvazio');if(vz)vz.remove();
+    if(!termos.length){cards.forEach(function(c){c.classList.remove('qhide');});qRes.hidden=true;return;}
+    var fa=document.getElementById('f-all');if(fa&&!fa.checked)fa.checked=true;
+    var sa=document.getElementById('s-all');if(sa&&!sa.checked)sa.checked=true;
+    var n=0;cards.forEach(function(c){var t=c.getAttribute('data-q')||'';var ok=termos.every(function(w){return t.indexOf(w)>=0;});c.classList.toggle('qhide',!ok);if(ok)n++;});
+    qRes.hidden=false;
+    qRes.innerHTML=n?('<b>'+n+'</b> '+(n===1?'resultado':'resultados')+' para “'+esc(raw.trim())+'”'):'';
+    if(!n){var d=document.createElement('div');d.className='qvazio';d.innerHTML='Nada encontrado para “<b>'+esc(raw.trim())+'</b>” 🔎<br>Tente outra palavra, ou chame no WhatsApp que a gente procura pra você!';grid.appendChild(d);}
+  }
+  function syncUrl(){try{var u=new URL(location.href);if(qIn.value.trim())u.searchParams.set('q',qIn.value.trim());else u.searchParams.delete('q');history.replaceState(null,'',u);}catch(e){}}
+  qIn.addEventListener('input',function(){clearTimeout(qT);qT=setTimeout(function(){aplicarBusca();syncUrl();},120);});
+  qIn.addEventListener('keydown',function(e){if(e.key==='Escape'){qIn.value='';aplicarBusca();syncUrl();}if(e.key==='Enter'){qIn.blur();var g=document.querySelector('.chips');if(g)window.scrollTo({top:g.getBoundingClientRect().top+window.scrollY-70,behavior:'smooth'});}});
+  qX.addEventListener('click',function(){qIn.value='';aplicarBusca();syncUrl();qIn.focus();});
+  // escolher uma categoria limpa a busca
+  document.addEventListener('change',function(e){if(e.target&&e.target.classList&&e.target.classList.contains('filt')&&qIn.value){qIn.value='';aplicarBusca();syncUrl();}});
+  try{var q0=new URL(location.href).searchParams.get('q');if(q0)qIn.value=q0;}catch(e){}
   // registra clique nos achadinhos (não atrapalha a abertura do link)
   document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('.affbtn');if(!a)return;
     try{fetch(URL_+'/rest/v1/rpc/registrar_clique',{method:'POST',keepalive:true,headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify({p_codigo:a.getAttribute('data-cod')})}).catch(function(){});}catch(err){}
