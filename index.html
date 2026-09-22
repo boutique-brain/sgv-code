@@ -40,6 +40,20 @@
 .card.qhide{display:none!important}
 #vbar label[for="f-all"]{display:none}
 .qvazio{grid-column:1/-1;text-align:center;padding:30px 12px;color:var(--marrom2);font-size:15px;line-height:1.5}
+@media(min-width:1180px){.grid{max-width:1880px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;padding:14px 24px}.chips{max-width:1880px;margin:0 auto;padding-left:24px;padding-right:24px}.vsres{max-width:1880px}}
+.vnovos{display:none}
+@media(max-width:1500px){.vnovos h2 small{display:none}.vnovos h2{font-size:16px}}
+@media(min-width:1280px){
+.vnovos{display:flex;flex-direction:column;position:absolute;top:22px;bottom:22px;left:1060px;right:28px;background:rgba(255,250,240,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:18px;padding:14px 18px;box-shadow:0 8px 26px rgba(60,40,10,.18);line-height:1.2;overflow:hidden}
+.vnovos h2{margin:0 0 10px;font-size:18px;color:#4a3526;display:flex;align-items:center;justify-content:space-between}
+.vnovos h2 small{font-size:12px;font-weight:600;color:#8a6f52}
+.vnlist{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(120px,1fr);gap:12px;flex:1;min-height:0;overflow:hidden}
+.vnitem{display:flex;flex-direction:column;background:#fff;border-radius:12px;overflow:hidden;cursor:pointer;border:none;padding:0;text-align:left;box-shadow:0 2px 8px rgba(60,40,10,.12);transition:transform .15s;min-width:0;font:inherit}
+.vnitem:hover{transform:translateY(-3px)}
+.vnitem img{width:100%;flex:1;min-height:0;object-fit:cover;display:block;background:#efe3cc}
+.vnitem span{display:block;padding:6px 8px 2px;font-size:12px;font-weight:700;color:#4a3526;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vnitem b{display:block;padding:0 8px 7px;font-size:13px;color:#5c7a35}
+}
 .slide img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
 .restag{position:absolute;top:8px;left:8px;z-index:3;background:#cf821d;color:#fff;font-size:11px;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .vstate{max-width:520px;margin:40px auto;text-align:center;color:var(--marrom2);font-size:15px;line-height:1.5;padding:0 16px}
@@ -55,7 +69,7 @@
 <header class="vbanner"><h1 class="vbanh"><picture>
 <source media="(max-width:640px)" srcset="bannerm-720.webp 720w, bannerm-1080.webp 1080w" sizes="100vw" width="1080" height="601">
 <img src="banner3-540.webp" width="2870" height="360" fetchpriority="high" alt="Baú de Achadinhos — descubra achadinhos incríveis todos os dias: produtos novos e de re-uso, em diversas categorias.">
-</picture></h1></header>
+</picture></h1><aside class="vnovos" id="vnovos" aria-label="Novidades"></aside></header>
 <div class="vbusca" id="vbusca" role="search"><div class="vsbox"><span class="vsico" aria-hidden="true">🔍</span><input type="search" id="q" placeholder="Buscar peças, livros, marcas e achadinhos…" autocomplete="off" enterkeyhint="search" aria-label="Buscar no Baú"><button type="button" class="vsx" id="qx" aria-label="limpar busca" hidden>✕</button></div><a class="vzapm" id="vzap" href="#" target="_blank" rel="noopener" hidden aria-label="Falar no WhatsApp"><span class="zi">💬</span><span class="zt">WhatsApp</span></a><button type="button" class="carttop" id="carttop"><span class="ctico">🛒</span><span class="cttxt">SEU PEDIDO</span><span class="ctbadge" id="ctbadge" hidden>0</span></button></div>
 <div class="vsres" id="qres" hidden></div>
 <div id="catalogo"><div class="vstate"><div class="spin"></div>Abrindo o baú…</div></div>
@@ -149,6 +163,7 @@
     try{var cart=JSON.parse(localStorage.getItem('brechoCarrinho')||'{}')||{},ok={},mud=false;itens.forEach(function(d){ok[d.codigo]=1;});
       Object.keys(cart).forEach(function(k){if(!ok[k]){delete cart[k];mud=true;}});if(mud)localStorage.setItem('brechoCarrinho',JSON.stringify(cart));}catch(e){}
     aplicarBusca();
+    montarNovos(itens);
     (function vitrineNav(){
     var bs=document.querySelectorAll('.cnav');
     for(var i=0;i<bs.length;i++){(function(btn){btn.addEventListener('click',function(e){
@@ -212,6 +227,21 @@
     render();
   })();
   }
+  // ---- painel "Acabou de chegar" (só em telas largas)
+  function montarNovos(itens){
+    var box=document.getElementById('vnovos');if(!box)return;
+    var lista=itens.filter(function(d){return d.foto1||d.foto2;}).slice(0,10);
+    if(!lista.length){box.remove();return;}
+    box.innerHTML='<h2>✨ Acabou de chegar <small>toque para ver</small></h2><div class="vnlist">'+lista.map(function(d){
+      var f=(d.categoria==='livros'?d.foto1:(d.foto2||d.foto1))||d.foto1;
+      return '<button type="button" class="vnitem" data-cod="'+esc(d.codigo)+'"><img src="'+esc(foto(f,true))+'" alt="" loading="lazy"><span>'+esc(d.titulo)+'</span><b>'+(Number(d.preco)?preco(d.preco):'')+'</b></button>';}).join('')+'</div>';
+    ajustarNovos();
+  }
+  function ajustarNovos(){var l=document.querySelector('.vnlist');if(!l)return;var w=l.clientWidth,n=Math.max(1,Math.floor((w+12)/132));
+    [].forEach.call(l.children,function(c,i){c.style.display=i<n?'':'none';});l.style.gridAutoColumns='calc((100% - '+(12*(n-1))+'px)/'+n+')';}
+  window.addEventListener('resize',ajustarNovos);
+  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.vnitem');if(!b)return;
+    qIn.value=b.getAttribute('data-cod');aplicarBusca();syncUrl();var g=document.querySelector('.grid');if(g)window.scrollTo({top:g.getBoundingClientRect().top+window.scrollY-80,behavior:'smooth'});});
   // ---- busca global (como no Mercado Livre): procura em todas as categorias
   var qIn=document.getElementById('q'),qX=document.getElementById('qx'),qRes=document.getElementById('qres'),qT=null;
   function aplicarBusca(){
