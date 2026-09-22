@@ -136,11 +136,14 @@
   .selo b{display:inline-block;font-family:'Montserrat',sans-serif;font-weight:800;font-size:30px;letter-spacing:1px;
     color:#fff;text-transform:uppercase;padding:13px 24px;border-radius:16px;border:3px solid rgba(255,255,255,.92);
     box-shadow:0 10px 22px rgba(0,0,0,.28)}
-  .selo.reuso b{background:linear-gradient(135deg,#6aa84f,#3d6b28)}
   .selo.novo b{background:linear-gradient(135deg,#38b85e,#1f8a40)}
   .selo.reservado b{background:linear-gradient(135deg,#efb04a,#cf821d)}
   .selo.vendido b{background:linear-gradient(135deg,#d9584a,#ab2a1e)}
   .selo.ultima b{background:linear-gradient(135deg,#b07a44,#6f4a26)}
+  .reuso-mini{position:absolute;top:18px;left:18px;z-index:28;display:none;width:62px;height:62px;border-radius:50%;
+    background:rgba(255,255,255,.93);border:3px solid #8fae6a;align-items:center;justify-content:center;font-size:30px;
+    box-shadow:0 6px 16px rgba(40,60,20,.25)}
+  .reuso-mini.on{display:flex}
 
   .login{position:fixed;inset:0;z-index:100;background:#efe7d6;display:flex;align-items:center;justify-content:center;padding:16px}
   .login[hidden]{display:none}
@@ -301,7 +304,6 @@
         <div class="sec-bd">
           <select id="sel-selo" class="cat-select" style="margin:0">
             <option value="">Nenhum</option>
-            <option value="reuso">♻️ Re-uso</option>
             <option value="novo">Novo</option>
             <option value="reservado">Reservado</option>
             <option value="vendido">Vendido</option>
@@ -364,6 +366,7 @@
                 <div class="rotulo" id="p-cap2">no manequim</div>
               </div>
               <div class="selo" id="selo"><b id="selo-txt">Reservado</b></div>
+              <div class="reuso-mini" id="reuso-mini" title="Peça de reuso">♻️</div>
             </div>
 
             <div class="marca-rod" id="marca">
@@ -410,8 +413,13 @@
     if(/mercadoli[vb]re|meli\.la|mlb\./.test(u))return 'Mercado Livre';if(/magazineluiza|magalu|divulgador\.magalu/.test(u))return 'Magalu';
     if(/tiktok/.test(u))return 'TikTok Shop';if(/aliexpress|a\.aliexpress|s\.click\.aliexpress/.test(u))return 'AliExpress';if(/shein/.test(u))return 'Shein';return '';}
   function ehAchadinho(){return document.getElementById('in-categoria').value==='achadinhos';}
+  function ehReuso(){var cat=document.getElementById('in-categoria').value;
+    var sl=(document.getElementById('sel-selo')||{}).value||'';
+    return cat!=='achadinhos'&&sl!=='novo';}
+  function aplicarReuso(){var el=document.getElementById('reuso-mini');if(el)el.classList.toggle('on',ehReuso());}
   function toggleSub(){
     var cat=document.getElementById('in-categoria').value,ach=cat==='achadinhos';
+    aplicarReuso();
     document.getElementById('campo-subcat').style.display=(cat==='moda')?'':'none';
     document.getElementById('campo-afiliado').style.display=ach?'':'none';
     document.getElementById('campo-veste').style.display=ach?'none':'';
@@ -469,13 +477,14 @@
     recompute();}
   document.querySelectorAll('.nf-btn').forEach(b=>b.addEventListener('click',()=>applyFotos(+b.dataset.nf)));
 
-  const SELOS={'reuso':'♻️ Re-uso','novo':'✨ Novo','reservado':'🔖 Reservado','vendido':'❤ Vendido','ultima':'🔥 Última peça'};
+  const SELOS={'novo':'✨ Novo','reservado':'🔖 Reservado','vendido':'❤ Vendido','ultima':'🔥 Última peça'};
   let seloAtual='';
   function applySelo(v){
     seloAtual=v||'';const el=document.getElementById('selo');
     el.className='selo';
     if(SELOS[seloAtual]){el.classList.add(seloAtual,'on');document.getElementById('selo-txt').textContent=SELOS[seloAtual];}
     document.getElementById('sel-selo').value=seloAtual;
+    aplicarReuso();
   }
   document.getElementById('sel-selo').addEventListener('change',e=>applySelo(e.target.value));
   function fmtPreco(v){v=String(v==null?'':v).replace(/^R\$?\s*/i,'').trim();if(!v)return '';
