@@ -66,7 +66,8 @@
 .vbusca .carttop .ctbadge{background:#f0b429!important;color:#3b2a14!important;font-weight:800}
 .vzapm{border:1.5px solid #c9a24a;background:linear-gradient(180deg,#2eb350,#1f8a3e)}
 .vhd .vzap,.vzap{border:1.5px solid #c9a24a}
-.creuso{display:inline-block;margin-top:6px;font-size:11.5px;font-weight:700;color:#4e6b2d;background:#eef3e3;border:1px solid #d5e0bf;border-radius:20px;padding:3px 10px}
+.reusotag{position:absolute;top:8px;right:8px;z-index:3;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.95);border:1.5px solid #8fae6a;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 7px rgba(40,60,20,.28);cursor:help}
+@media(max-width:640px){.reusotag{width:27px;height:27px;font-size:14px;top:6px;right:6px}}
 .slide img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
 .restag{position:absolute;top:8px;left:8px;z-index:3;background:#cf821d;color:#fff;font-size:11px;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .vstate{max-width:520px;margin:40px auto;text-align:center;color:var(--marrom2);font-size:15px;line-height:1.5;padding:0 16px}
@@ -158,6 +159,7 @@
       var qtxt=norm([d.titulo,d.descricao,d.codigo,d.tamanho,d.veste,d.loja,tagTxt,nameOf[d.categoria],d.sinopse].join(' '));
       return '<div class="card" data-cat="'+(nameOf[d.categoria]?d.categoria:'__o')+'" data-sub="'+esc(d.subcategoria||'')+'" data-q="'+esc(qtxt)+'">'
         +(d.status==='reservado'?'<span class="restag">RESERVADO</span>':'')
+        +(d.selo==='reuso'?'<span class="reusotag" title="Peça de reuso" aria-label="Peça de reuso">♻️</span>':'')
         +'<div class="cmedia"><div class="carousel">'+slides+'</div>'+navs+hint+'</div><div class="cbody">'
         +(tagTxt?'<span class="ctag">'+esc(tagTxt)+'</span>':'')
         +'<div class="ctit">'+esc(d.titulo)+'</div>'+(d.descricao?'<div class="cdesc">'+esc(d.descricao)+'</div>':'')
@@ -165,7 +167,7 @@
         +(ach?(d.loja?'<span class="cloja">🏬 '+esc(d.loja)+'</span>':'')
              :(d.tamanho?'<div class="cmeta">'+esc(d.rotulo_tam||'Nº')+': '+esc(d.tamanho)+'</div>':''))
         +(d.veste?'<div class="cveste">👶 veste '+esc(d.veste)+'</div>':'')
-        +(e[0]>0?'<div class="creuso">♻️ Peça de reuso</div>':'')
+
         +ph+(ach
           ?'<a class="cbtn affbtn" href="'+esc(d.link_afiliado)+'" target="_blank" rel="noopener noreferrer sponsored nofollow" data-cod="'+esc(d.codigo)+'">🛍️ Ver '+(d.loja&&d.loja!=='Outra'?'na '+esc(d.loja):'oferta')+' ↗</a>'
             +'<div class="cafil">🔗 Link de afiliado · preço conferido em '+dataBR(d.atualizado_em)+', pode mudar na loja</div>'
@@ -295,7 +297,7 @@
   if(!URL_||/SEU-PROJETO/.test(URL_)){estado('⚙️ Configure o arquivo config.js com os dados do Supabase.');return;}
   Promise.all([
     api('config?select=slogan,complemento,contato,whatsapp&id=eq.1').then(function(r){return r[0];}).catch(function(){return null;}),
-    api('pecas?select=codigo,titulo,descricao,categoria,subcategoria,rotulo_tam,tamanho,veste,preco,preco_ref,sinopse,status,foto1,foto2,link_afiliado,loja,atualizado_em&status=neq.vendido&order=criado_em.desc')
+    api('pecas?select=codigo,titulo,descricao,categoria,subcategoria,rotulo_tam,tamanho,veste,preco,preco_ref,sinopse,status,selo,foto1,foto2,link_afiliado,loja,atualizado_em&status=neq.vendido&order=criado_em.desc')
   ]).then(function(r){render(r[0],r[1]);})
     .catch(function(err){console.error(err);estado('Não consegui abrir o baú agora 😕<br>Atualize a página em instantes.');});
 })();

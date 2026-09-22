@@ -136,6 +136,7 @@
   .selo b{display:inline-block;font-family:'Montserrat',sans-serif;font-weight:800;font-size:30px;letter-spacing:1px;
     color:#fff;text-transform:uppercase;padding:13px 24px;border-radius:16px;border:3px solid rgba(255,255,255,.92);
     box-shadow:0 10px 22px rgba(0,0,0,.28)}
+  .selo.reuso b{background:linear-gradient(135deg,#6aa84f,#3d6b28)}
   .selo.novo b{background:linear-gradient(135deg,#38b85e,#1f8a40)}
   .selo.reservado b{background:linear-gradient(135deg,#efb04a,#cf821d)}
   .selo.vendido b{background:linear-gradient(135deg,#d9584a,#ab2a1e)}
@@ -300,6 +301,7 @@
         <div class="sec-bd">
           <select id="sel-selo" class="cat-select" style="margin:0">
             <option value="">Nenhum</option>
+            <option value="reuso">♻️ Re-uso</option>
             <option value="novo">Novo</option>
             <option value="reservado">Reservado</option>
             <option value="vendido">Vendido</option>
@@ -467,7 +469,7 @@
     recompute();}
   document.querySelectorAll('.nf-btn').forEach(b=>b.addEventListener('click',()=>applyFotos(+b.dataset.nf)));
 
-  const SELOS={'novo':'✨ Novo','reservado':'🔖 Reservado','vendido':'❤ Vendido','ultima':'🔥 Última peça'};
+  const SELOS={'reuso':'♻️ Re-uso','novo':'✨ Novo','reservado':'🔖 Reservado','vendido':'❤ Vendido','ultima':'🔥 Última peça'};
   let seloAtual='';
   function applySelo(v){
     seloAtual=v||'';const el=document.getElementById('selo');
