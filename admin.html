@@ -154,6 +154,8 @@
   .cat-btn:disabled,.cat-select:disabled{opacity:.55;cursor:wait}
   .cat-btn.vendida{background:#fbeae7;border-color:#e3b3ab;color:#ab2a1e}
   a.vitrine-btn{display:block;text-align:center;text-decoration:none}
+  .afil{background:#fbf4e4;border:1.5px dashed #d8b87a;border-radius:11px;padding:10px 11px}
+  .afil-cliques{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--marrom-2)}
   .cat-resumo{font-size:10.5px;color:#9c8a74;margin:-2px 0 7px;text-align:center}
 </style>
 </head>
@@ -187,7 +189,7 @@
           <select id="cat-filtro" class="cat-select" style="margin-bottom:6px;font-weight:600">
             <option value="disponivel">Mostrar: Disponíveis</option>
             <option value="reservado">Mostrar: Reservadas</option>
-            <option value="vendido">Mostrar: Vendidas</option>
+            <option value="vendido">Mostrar: Vendidas / encerradas</option>
             <option value="todos">Mostrar: Todas</option>
           </select>
           <div class="cat-resumo" id="cat-resumo"></div>
@@ -215,14 +217,23 @@
           <div class="campo"><input id="in-desc" type="text" value="c/capuz e bolso canguru (veste 6/7 anos)" maxlength="44" placeholder="Descrição curta"></div>
           <div class="campo"><label>Categoria</label><select id="in-categoria" class="cat-select" style="margin:0"><option value="">— sem categoria —</option></select></div>
           <div class="campo" id="campo-subcat" style="display:none"><label>Subdivisão da Moda</label><select id="in-subcat" class="cat-select" style="margin:0"><option value="">— escolha —</option></select></div>
+          <div class="campo afil" id="campo-afiliado" style="display:none">
+            <label>🔗 Link de afiliado (obrigatório)</label>
+            <input id="in-link" type="url" inputmode="url" placeholder="https://s.shopee.com.br/..." maxlength="600">
+            <div class="linha2" style="margin-top:7px">
+              <select id="in-loja" class="cat-select" style="margin:0"><option value="">— loja —</option></select>
+              <div class="afil-cliques" id="afil-cliques"></div>
+            </div>
+            <div class="fixo-nota">Cole o link gerado no programa de afiliados. A loja é reconhecida sozinha pelo link.</div>
+          </div>
           <div class="campo"><label>Código do produto (automático)</label><input id="in-codigo" type="text" placeholder="gerado ao salvar" maxlength="12" readonly style="background:#f1ece0;color:var(--marrom-2);letter-spacing:1px;font-weight:700"></div>
           <div class="linha3">
-            <div class="campo"><label>Nº / Tam</label><input id="in-tam" type="text" value="12" maxlength="14"></div>
-            <div class="campo"><label>Veste</label><input id="in-veste" type="text" placeholder="~4 anos" maxlength="18"></div>
+            <div class="campo"><label id="lbl-tam">Nº / Tam</label><input id="in-tam" type="text" value="12" maxlength="14"></div>
+            <div class="campo" id="campo-veste"><label>Veste</label><input id="in-veste" type="text" placeholder="~4 anos" maxlength="18"></div>
             <div class="campo"><label>R$</label><input id="in-valor" type="text" value="25" maxlength="10"></div>
           </div>
-          <div class="campo"><label>Preço novo de referência (mostra a economia) — opcional</label><input id="in-precoref" type="text" placeholder="ex.: 120" maxlength="10"><span class="mini-toggle" id="btn-preco" style="margin-top:6px">🔎 buscar preço de mercado</span></div>
-          <div class="campo"><label>Sinopse do livro (aparece como 2ª "foto" nos livros) — opcional</label><textarea id="in-sinopse" rows="4" maxlength="700" placeholder="Resumo/sinopse do livro..." style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1.5px solid #d9c9a7;border-radius:10px;resize:vertical"></textarea></div>
+          <div class="campo"><label id="lbl-precoref">Preço novo de referência (mostra a economia) — opcional</label><input id="in-precoref" type="text" placeholder="ex.: 120" maxlength="10"><span class="mini-toggle" id="btn-preco" style="margin-top:6px">🔎 buscar preço de mercado</span></div>
+          <div class="campo" id="campo-sinopse"><label>Sinopse do livro (aparece como 2ª "foto" nos livros) — opcional</label><textarea id="in-sinopse" rows="4" maxlength="700" placeholder="Resumo/sinopse do livro..." style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1.5px solid #d9c9a7;border-radius:10px;resize:vertical"></textarea></div>
         </div>
       </div>
 
@@ -352,8 +363,35 @@
     var ss=document.getElementById('in-subcat');
     SUBS.forEach(function(c){var o=document.createElement('option');o.value=c.k;o.textContent=c.e+' '+c.n;ss.appendChild(o);});
   })();
-  function toggleSub(){document.getElementById('campo-subcat').style.display=(document.getElementById('in-categoria').value==='moda')?'':'none';}
-  document.getElementById('in-categoria').addEventListener('change',toggleSub);
+  const LOJAS=['Shopee','Amazon','Mercado Livre','Magalu','TikTok Shop','AliExpress','Shein','Outra'];
+  (function(){var s=document.getElementById('in-loja');LOJAS.forEach(function(l){var o=document.createElement('option');o.value=l;o.textContent=l;s.appendChild(o);});})();
+  function lojaDoLink(u){u=String(u||'').toLowerCase();
+    if(/shopee|shp\.ee/.test(u))return 'Shopee';if(/amazon\.|amzn\./.test(u))return 'Amazon';
+    if(/mercadoli[vb]re|meli\.la|mlb\./.test(u))return 'Mercado Livre';if(/magazineluiza|magalu|divulgador\.magalu/.test(u))return 'Magalu';
+    if(/tiktok/.test(u))return 'TikTok Shop';if(/aliexpress|a\.aliexpress|s\.click\.aliexpress/.test(u))return 'AliExpress';if(/shein/.test(u))return 'Shein';return '';}
+  function ehAchadinho(){return document.getElementById('in-categoria').value==='achadinhos';}
+  function toggleSub(){
+    var cat=document.getElementById('in-categoria').value,ach=cat==='achadinhos';
+    document.getElementById('campo-subcat').style.display=(cat==='moda')?'':'none';
+    document.getElementById('campo-afiliado').style.display=ach?'':'none';
+    document.getElementById('campo-veste').style.display=ach?'none':'';
+    document.getElementById('campo-sinopse').style.display=(cat==='livros')?'':'none';
+    document.getElementById('lbl-tam').textContent=ach?'Loja (no post)':'Nº / Tam';
+    document.getElementById('lbl-precoref').textContent=ach?'Preço "de" (antes da oferta) — opcional':'Preço novo de referência (mostra a economia) — opcional';
+    var bv=document.getElementById('btn-vendida');if(bv)bv.textContent=ach?'⛔ Encerrar oferta':'❤ Vendida';
+  }
+  function sincLoja(){if(!ehAchadinho())return;var l=document.getElementById('in-loja').value;
+    var r=document.getElementById('in-rotulo'),t=document.getElementById('in-tam');
+    r.value='Loja';r.dispatchEvent(new Event('input'));t.value=l||'';t.dispatchEvent(new Event('input'));}
+  document.getElementById('in-categoria').addEventListener('change',function(){
+    if(ehAchadinho()){var v=document.getElementById('in-veste');v.value='';v.dispatchEvent(new Event('input'));
+      ['in-cap1','in-cap2'].forEach(function(id){var el=document.getElementById(id);if(el.value==='no flat lay'||el.value==='no manequim'){el.value='';el.dispatchEvent(new Event('input'));}});
+      sincLoja();}
+    else{var r=document.getElementById('in-rotulo');if(r.value==='Loja'){r.value='Nº / Manequim';r.dispatchEvent(new Event('input'));var t=document.getElementById('in-tam');t.value='';t.dispatchEvent(new Event('input'));}}
+  });
+  document.getElementById('in-link').addEventListener('input',function(){var l=lojaDoLink(this.value);if(l&&document.getElementById('in-loja').value!==l){document.getElementById('in-loja').value=l;sincLoja();}});
+  document.getElementById('in-loja').addEventListener('change',sincLoja);
+  document.getElementById('in-categoria').addEventListener('change',toggleSub);toggleSub();
 
   // seções recolhíveis
   document.querySelectorAll('.sec-hd').forEach(h=>h.addEventListener('click',()=>h.parentElement.classList.toggle('col')));
@@ -449,7 +487,7 @@
   ligaFoto('file-2','foto2','tg-2',2);
 
   /* ---------- CATÁLOGO (Supabase) ---------- */
-  const CAMPOS=['in-titulo','in-desc','in-categoria','in-subcat','in-codigo','in-rotulo','in-tam','in-veste','in-valor','in-precoref','in-sinopse','in-cap1','in-cap2','in-tag','in-nome','in-contato'];
+  const CAMPOS=['in-titulo','in-desc','in-categoria','in-subcat','in-link','in-loja','in-codigo','in-rotulo','in-tam','in-veste','in-valor','in-precoref','in-sinopse','in-cap1','in-cap2','in-tag','in-nome','in-contato'];
   const DEFAULTS={'in-cap1':'no flat lay','in-cap2':'no manequim','in-rotulo':'Nº / Manequim'};
   const CFG=window.BAU_CONFIG||{};const BUCKET=CFG.BUCKET||'fotos';
   let sb=null;let catalogo=[];let atual=null;const fotoNova={1:false,2:false};let ocupado=false;
@@ -470,13 +508,14 @@
   function thumbDe(path){return path.replace(/\.(\w+)$/,'-t.$1');}
 
   function rowToP(r){return {id:r.id,fmt:r.formato_post||'4:5',nFotos:r.n_fotos||2,selo:r.selo||(r.status==='vendido'?'vendido':r.status==='reservado'?'reservado':''),
-    paths:{1:r.foto1||'',2:r.foto2||''},nome:r.titulo,
+    paths:{1:r.foto1||'',2:r.foto2||''},nome:r.titulo,cliques:r.cliques||0,
     campos:{'in-titulo':r.titulo||'','in-desc':r.descricao||'','in-categoria':r.categoria||'','in-subcat':r.subcategoria||'','in-codigo':r.codigo||'',
       'in-rotulo':r.rotulo_tam||'','in-tam':r.tamanho||'','in-veste':r.veste||'','in-valor':numTxt(r.preco),'in-precoref':numTxt(r.preco_ref),
-      'in-sinopse':r.sinopse||'','in-cap1':r.legenda1||'','in-cap2':r.legenda2||''}};}
+      'in-sinopse':r.sinopse||'','in-cap1':r.legenda1||'','in-cap2':r.legenda2||'','in-link':r.link_afiliado||'','in-loja':r.loja||''}};}
   function camposToRow(c,selo,fmt,nf){return {codigo:c['in-codigo'],titulo:(c['in-titulo']||'Sem nome').trim()||'Sem nome',descricao:c['in-desc']||null,
     categoria:c['in-categoria']||null,subcategoria:(c['in-categoria']==='moda'&&c['in-subcat'])||null,rotulo_tam:c['in-rotulo']||null,tamanho:c['in-tam']||null,
     veste:c['in-veste']||null,preco:num(c['in-valor']),preco_ref:num(c['in-precoref']),sinopse:c['in-sinopse']||null,legenda1:c['in-cap1']||null,legenda2:c['in-cap2']||null,
+    link_afiliado:(c['in-categoria']==='achadinhos'&&c['in-link'].trim())||null,loja:(c['in-categoria']==='achadinhos'&&c['in-loja'])||null,
     selo:selo||null,status:selo==='vendido'?'vendido':selo==='reservado'?'reservado':'disponivel',formato_post:fmt||'4:5',n_fotos:nf==1?1:2};}
 
   function ordenar(){catalogo.sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt',{sensitivity:'base',numeric:true}));}
@@ -486,7 +525,8 @@
     catalogo.forEach(function(p){if(f==='todos'||statusDe(p)===f){html+='<option value="'+p.id+'">'+String(p.nome||'Sem nome').replace(/</g,'&lt;')+' · '+p.campos['in-codigo']+'</option>';}});
     s.innerHTML=html;s.value=selId||'';
     const n={disponivel:0,reservado:0,vendido:0};catalogo.forEach(p=>n[statusDe(p)]++);
-    document.getElementById('cat-resumo').textContent=catalogo.length+' peças · '+n.disponivel+' disponíveis · '+n.reservado+' reservadas · '+n.vendido+' vendidas';
+    var na=catalogo.filter(p=>p.campos['in-categoria']==='achadinhos'&&statusDe(p)!=='vendido').length;
+    document.getElementById('cat-resumo').textContent=catalogo.length+' peças · '+n.disponivel+' disponíveis · '+n.reservado+' reservadas · '+n.vendido+' vendidas'+(na?(' · ✨ '+na+(na===1?' achadinho ativo':' achadinhos ativos')):'');
   }
   function flash(msg,erro){const s=document.getElementById('cat-status');s.textContent=msg;s.style.color=erro?'#ab2a1e':'#5c6b3d';
     clearTimeout(flash._t);if(!erro)flash._t=setTimeout(()=>{s.style.color='';},2600);}
@@ -505,14 +545,17 @@
     aplicarFormato(p.fmt||'4:5');applyFotos(p.nFotos||2);applySelo(p.selo||'');
     CAMPOS.forEach(id=>{if(id==='in-tag'||id==='in-nome'||id==='in-contato')return;const el=document.getElementById(id);
       const v=(p.campos[id]!=null&&p.campos[id]!=='')?p.campos[id]:(DEFAULTS[id]||'');el.value=v;el.dispatchEvent(new Event('input'));});
-    toggleSub();fotoNova[1]=fotoNova[2]=false;setFoto(1,'');setFoto(2,'');recompute();
+    toggleSub();var ac=document.getElementById('afil-cliques');ac.textContent='';
+    if(p.campos['in-categoria']==='achadinhos'){var fc=function(n){ac.textContent='👆 '+n+(n===1?' clique':' cliques')+' na vitrine';};fc(p.cliques||0);
+      sb.from('pecas').select('cliques').eq('id',p.id).maybeSingle().then(function(r){if(r.data&&atual===p){p.cliques=r.data.cliques||0;fc(p.cliques);}});}
+    fotoNova[1]=fotoNova[2]=false;setFoto(1,'');setFoto(2,'');recompute();
     for(const n of [1,2]){if(p.paths[n]){const d=await urlParaData(urlFoto(p.paths[n]));if(atual===p){setFoto(n,d);fotoNova[n]=false;}}}
     recompute();
   }
   function novaPeca(){
     atual=null;var keep={'in-tag':1,'in-nome':1,'in-contato':1};
     CAMPOS.forEach(function(id){if(keep[id])return;var el=document.getElementById(id);el.value=(DEFAULTS[id]||'');el.dispatchEvent(new Event('input'));});
-    applySelo('');applyFotos(2);setFoto(1,'');setFoto(2,'');fotoNova[1]=fotoNova[2]=false;toggleSub();
+    applySelo('');applyFotos(2);setFoto(1,'');setFoto(2,'');fotoNova[1]=fotoNova[2]=false;toggleSub();document.getElementById('afil-cliques').textContent='';
     document.getElementById('cat-select').value='';recompute();
   }
   ['file-1','file-2'].forEach((id,i)=>document.getElementById(id).addEventListener('change',()=>{fotoNova[i+1]=true;}));
@@ -536,6 +579,11 @@
     const cat=document.getElementById('in-categoria').value||'',sub=document.getElementById('in-subcat').value||'';
     const c={};CAMPOS.forEach(id=>c[id]=document.getElementById(id).value);
     if(!c['in-titulo'].trim())return flash('Preencha o título da peça.',true);
+    if(cat==='achadinhos'){
+      c['in-link']=c['in-link'].trim();
+      if(!/^https:\/\/[^\s]+\.[^\s]+$/i.test(c['in-link']))return flash('Cole o link de afiliado (tem que começar com https://).',true);
+      if(!c['in-loja']){c['in-loja']=lojaDoLink(c['in-link'])||'Outra';document.getElementById('in-loja').value=c['in-loja'];}
+    }
     let cod=c['in-codigo'].trim();const wasNew=!atual;
     if(!cod||!new RegExp('^'+prefixoDe(cat,sub)+'\\d{6}$').test(cod))cod=proximoCodigo(cat,sub);
     c['in-codigo']=cod;
@@ -563,6 +611,7 @@
   }
   async function marcarVendida(){
     if(!atual)return flash('Selecione uma peça do catálogo primeiro.',true);
+    if(ehAchadinho()&&!confirm('Encerrar a oferta "'+atual.nome+'"? Ela sai da vitrine (dá pra reativar depois tirando o selo Vendido).'))return;
     applySelo('vendido');await salvar();
   }
   async function excluir(){
