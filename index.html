@@ -18,12 +18,15 @@
 .cloja{display:inline-block;font-size:11.5px;font-weight:800;color:#b3480f;margin-top:3px}
 .cafil{font-size:10.5px;color:#9c8a74;margin-top:5px;line-height:1.3}
 .affnote{display:block;margin-top:6px;font-size:11px;color:#9c8a74}
-.vhd.vlogo{background:radial-gradient(ellipse at 50% 45%,#5b4524 0%,#2a1f10 45%,#0d0904 80%);border-bottom:3px solid #c9a24a;padding:10px 12px 18px}
-.vlogoh{margin:0 auto;max-width:470px;line-height:0}
-.vlogoh img{width:100%;height:auto;display:block;-webkit-mask-image:radial-gradient(ellipse 66% 64% at 50% 52%,#000 58%,transparent 100%);mask-image:radial-gradient(ellipse 66% 64% at 50% 52%,#000 58%,transparent 100%)}
-.vhd.vlogo .vzap{margin-top:6px}
-@media(max-width:640px){.vhd.vlogo{padding-top:52px}}
-.vbusca{position:sticky;top:0;z-index:50;background:#1a130a;padding:10px 12px;border-bottom:3px solid #c9a24a;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.vbanner{background:#f3e6cf;line-height:0;border-bottom:3px solid #c9a24a}
+.vbanh{margin:0 auto;max-width:1980px}
+.vbanh img{width:100%;height:auto;display:block}
+.vbusca{position:sticky;top:0;z-index:50;background:#1a130a;padding:9px 12px;border-bottom:3px solid #c9a24a;box-shadow:0 4px 12px rgba(0,0,0,.18);display:flex;align-items:center;gap:8px;justify-content:center}
+.vbusca .vsbox{flex:1 1 auto;max-width:640px;margin:0}
+.vzapm{flex:0 0 auto;display:flex;align-items:center;gap:6px;height:44px;padding:0 14px;border-radius:22px;background:#25a244;color:#fff;text-decoration:none;font-weight:700;font-size:13.5px}
+.vzapm[hidden]{display:none}
+.vbusca .carttop{position:relative!important;top:auto!important;right:auto!important;flex:0 0 auto;height:44px;box-shadow:none}
+@media(max-width:640px){.vbusca{padding:8px 8px;gap:6px}.vzapm{padding:0 11px}.vzapm .zt,.vbusca .carttop .cttxt{display:none}.vbusca .carttop{padding:0 12px}}
 .vsbox{position:relative;max-width:640px;margin:0 auto}
 .vsbox input{width:100%;height:46px;border:none;border-radius:10px;padding:0 44px 0 42px;font-size:16px;color:#3a2a1c;background:#fff;box-shadow:inset 0 0 0 2px #e7c46c;-webkit-appearance:none;appearance:none}
 .vsbox input:focus{outline:none;box-shadow:inset 0 0 0 3px #f0b429}
@@ -33,8 +36,8 @@
 .vsres{max-width:1100px;margin:12px auto 0;padding:0 16px;font-size:14px;color:var(--marrom2)}
 .vsres b{color:var(--marrom)}
 .card.qhide{display:none!important}
+#vbar label[for="f-all"]{display:none}
 .qvazio{grid-column:1/-1;text-align:center;padding:30px 12px;color:var(--marrom2);font-size:15px;line-height:1.5}
-@media(max-width:640px){.vbusca{padding-right:150px}.vhd.vlogo{padding-top:12px}.carttop{top:14px!important}}
 .slide img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
 .restag{position:absolute;top:8px;left:8px;z-index:3;background:#cf821d;color:#fff;font-size:11px;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .vstate{max-width:520px;margin:40px auto;text-align:center;color:var(--marrom2);font-size:15px;line-height:1.5;padding:0 16px}
@@ -47,11 +50,14 @@
 <script src="config.js"></script>
 </head>
 <body>
-<header class="vhd vlogo"><h1 class="vlogoh"><img src="logo-1200.webp" srcset="logo-720.webp 720w, logo-1200.webp 1200w" sizes="(max-width:640px) 100vw, 470px" width="1200" height="800" alt="Baú de Achadinhos — tudo o que é um achado, em um só lugar" fetchpriority="high"></h1><a class="vzap" id="vzap" href="#" target="_blank" rel="noopener" hidden>📲 Falar no WhatsApp</a></header>
-<div class="vbusca" id="vbusca" role="search"><div class="vsbox"><span class="vsico" aria-hidden="true">🔍</span><input type="search" id="q" placeholder="Buscar peças, livros, marcas e achadinhos…" autocomplete="off" enterkeyhint="search" aria-label="Buscar no Baú"><button type="button" class="vsx" id="qx" aria-label="limpar busca" hidden>✕</button></div></div>
+<header class="vbanner"><h1 class="vbanh"><picture>
+<source media="(max-width:640px)" srcset="banner2-720.webp 720w, banner2-1200.webp 1200w" sizes="100vw">
+<img src="banner2-1980.webp" srcset="banner2-1200.webp 1200w, banner2-1980.webp 1980w" sizes="100vw" width="1980" height="792" fetchpriority="high" alt="Baú de Achadinhos — descubra achadinhos incríveis todos os dias: produtos novos e de re-uso, em diversas categorias, reunidos em um só lugar.">
+</picture></h1></header>
+<div class="vbusca" id="vbusca" role="search"><div class="vsbox"><span class="vsico" aria-hidden="true">🔍</span><input type="search" id="q" placeholder="Buscar peças, livros, marcas e achadinhos…" autocomplete="off" enterkeyhint="search" aria-label="Buscar no Baú"><button type="button" class="vsx" id="qx" aria-label="limpar busca" hidden>✕</button></div><a class="vzapm" id="vzap" href="#" target="_blank" rel="noopener" hidden aria-label="Falar no WhatsApp"><span class="zi">💬</span><span class="zt">WhatsApp</span></a><button type="button" class="carttop" id="carttop"><span class="ctico">🛒</span><span class="cttxt">SEU PEDIDO</span><span class="ctbadge" id="ctbadge" hidden>0</span></button></div>
 <div class="vsres" id="qres" hidden></div>
 <div id="catalogo"><div class="vstate"><div class="spin"></div>Abrindo o baú…</div></div>
-<button type="button" class="carttop" id="carttop"><span class="ctico">🛒</span><span class="cttxt">SEU PEDIDO</span><span class="ctbadge" id="ctbadge" hidden>0</span></button>
+
 <div class="cartov" id="cartov" hidden></div>
 <aside class="cart" id="cart" hidden aria-label="Seu pedido">
 <div class="carthd">🛒 SEU PEDIDO<button type="button" class="cartx" id="cartx" aria-label="fechar">✕</button></div>
@@ -223,6 +229,9 @@
   qIn.addEventListener('input',function(){clearTimeout(qT);qT=setTimeout(function(){aplicarBusca();syncUrl();},120);});
   qIn.addEventListener('keydown',function(e){if(e.key==='Escape'){qIn.value='';aplicarBusca();syncUrl();}if(e.key==='Enter'){qIn.blur();var g=document.querySelector('.chips');if(g)window.scrollTo({top:g.getBoundingClientRect().top+window.scrollY-70,behavior:'smooth'});}});
   qX.addEventListener('click',function(){qIn.value='';aplicarBusca();syncUrl();qIn.focus();});
+  // sem o chip "Tudo": tocar de novo na categoria ativa volta a mostrar todas as peças
+  document.addEventListener('click',function(e){var l=e.target.closest&&e.target.closest('#vbar label.chip');if(!l)return;
+    var r=document.getElementById(l.getAttribute('for'));if(r&&r.checked&&r.id!=='f-all'){e.preventDefault();var fa=document.getElementById('f-all');if(fa)fa.checked=true;var sa=document.getElementById('s-all');if(sa)sa.checked=true;}});
   // escolher uma categoria limpa a busca
   document.addEventListener('change',function(e){if(e.target&&e.target.classList&&e.target.classList.contains('filt')&&qIn.value){qIn.value='';aplicarBusca();syncUrl();}});
   try{var q0=new URL(location.href).searchParams.get('q');if(q0)qIn.value=q0;}catch(e){}
