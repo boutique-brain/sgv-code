@@ -54,6 +54,18 @@
 .vnitem span{display:block;padding:6px 8px 2px;font-size:12px;font-weight:700;color:#4a3526;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vnitem b{display:block;padding:0 8px 7px;font-size:13px;color:#5c7a35}
 }
+.cnav{width:38px!important;height:38px!important;background:rgba(255,255,255,.94)!important;color:#4a3526!important;font-size:22px!important;box-shadow:0 2px 10px rgba(40,25,10,.35)!important;opacity:1!important;border:1.5px solid rgba(120,90,50,.25)!important;display:flex!important;align-items:center;justify-content:center;padding:0;transition:transform .12s,background .12s}
+.cnav.prev{left:8px!important}.cnav.next{right:8px!important}
+.cnav:hover{background:#fff!important;transform:translateY(-50%) scale(1.08)}
+.cnav:active{transform:translateY(-50%) scale(.94)}
+@media(max-width:640px){.cnav{width:34px!important;height:34px!important;font-size:20px!important}}
+.swipehint{background:rgba(74,53,38,.86)!important;font-size:11.5px!important;padding:4px 10px!important}
+.chips .chip{border:1.5px solid #d9c9a7!important;background:#fff!important;color:#4a3526!important;font-weight:700!important;box-shadow:0 1px 4px rgba(74,53,38,.10)}
+.chips .chip:hover{border-color:#c9a24a!important;background:#fdf8ec!important}
+.vbusca .carttop{background:linear-gradient(180deg,#7a5334,#4a3526)!important;border:1.5px solid #c9a24a!important;color:#fff!important;font-weight:700}
+.vbusca .carttop .ctbadge{background:#f0b429!important;color:#3b2a14!important;font-weight:800}
+.vzapm{border:1.5px solid #c9a24a;background:linear-gradient(180deg,#2eb350,#1f8a3e)}
+.vhd .vzap,.vzap{border:1.5px solid #c9a24a}
 .slide img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
 .restag{position:absolute;top:8px;left:8px;z-index:3;background:#cf821d;color:#fff;font-size:11px;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .vstate{max-width:520px;margin:40px auto;text-align:center;color:var(--marrom2);font-size:15px;line-height:1.5;padding:0 16px}
@@ -110,7 +122,7 @@
     CATS.forEach(function(c){nameOf[c.k]=c.n;emoOf[c.k]=c.e;});SUBS.forEach(function(c){subName[c.k]=c.n;subEmo[c.k]=c.e;});
     var mains=CATS.filter(function(c){return itens.some(function(d){return d.categoria===c.k;});});
     var subs=SUBS.filter(function(c){return itens.some(function(d){return d.categoria==='moda'&&d.subcategoria===c.k;});});
-    var A='background:var(--destaque);color:#fff;border-color:var(--destaque)';
+    var A='background:linear-gradient(180deg,#7a5334,#4a3526)!important;color:#fff!important;border-color:#c9a24a!important;box-shadow:0 2px 8px rgba(74,53,38,.28)';
     var radios='<input class="filt" type="radio" name="f" id="f-all" checked>',dyn='.filt{display:none}.subbar{display:none}#f-all:checked~#vbar label[for="f-all"]{'+A+'}';
     var bar='<div class="chips" id="vbar"><label class="chip" for="f-all">Tudo ('+itens.length+')</label>';
     mains.forEach(function(c){var n=itens.filter(function(d){return d.categoria===c.k;}).length;
