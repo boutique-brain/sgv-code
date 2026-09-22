@@ -156,6 +156,35 @@
   a.vitrine-btn{display:block;text-align:center;text-decoration:none}
   .afil{background:#fbf4e4;border:1.5px dashed #d8b87a;border-radius:11px;padding:10px 11px}
   .afil-cliques{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--marrom-2)}
+  .resumo-btn{width:100%;margin-bottom:8px;background:#fbf4e4;border-color:#d8b87a;color:#8a5a1c}
+  .rz-ov{position:fixed;inset:0;z-index:200;background:rgba(40,28,16,.55);display:flex;align-items:flex-start;justify-content:center;padding:28px 14px;overflow:auto}
+  .rz-ov[hidden]{display:none}
+  .rz-box{background:#fff;border-radius:16px;width:100%;max-width:1000px;padding:18px 20px 16px;box-shadow:0 16px 50px rgba(0,0,0,.3);font-family:'Montserrat',sans-serif;color:var(--marrom)}
+  .rz-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .rz-hd h2{font-family:'Playfair Display',serif;font-size:21px}
+  .rz-x{border:none;background:#f1e7d3;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px}
+  .rz-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+  .rz-k{background:#faf5ea;border:1px solid #ece2cf;border-radius:12px;padding:10px 12px}
+  .rz-k b{display:block;font-size:24px;font-weight:800}
+  .rz-k span{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--marrom-2);font-weight:700}
+  .rz-k.txt b{font-size:15px;line-height:1.25;margin-bottom:3px}
+  .rz-k.alerta{background:#fdf0e3;border-color:#efc08c}.rz-k.alerta b{color:#b3480f}
+  .rz-lojas{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .rz-lj{border:1px solid #e6dcc7;border-radius:20px;padding:6px 12px;font-size:12.5px;font-weight:600;background:#fff}
+  .rz-filtros{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;font-weight:600;margin-bottom:8px}
+  .rz-filtros label{cursor:pointer;display:flex;gap:5px;align-items:center}
+  .rz-tab{overflow-x:auto;border:1px solid #ece2cf;border-radius:12px}
+  .rz-tab table{width:100%;border-collapse:collapse;font-size:13px}
+  .rz-tab th{text-align:left;background:#faf5ea;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--marrom-2);white-space:nowrap}
+  .rz-tab td{padding:7px 10px;border-top:1px solid #f1e9da;vertical-align:middle}
+  .rz-tab td.num{text-align:right;font-weight:700;white-space:nowrap}
+  .rz-tab img{width:42px;height:42px;object-fit:cover;border-radius:8px;display:block;background:#efe3cc}
+  .rz-tab .tit{font-weight:700}.rz-tab .cod{font-size:11px;color:#9c8a74}
+  .rz-tab .velho{color:#b3480f;font-weight:700}
+  .rz-tab .acts{white-space:nowrap}
+  .rz-tab .acts button,.rz-tab .acts a{border:1px solid #e6dcc7;background:#fdfbf5;border-radius:8px;padding:5px 8px;font-size:11.5px;font-weight:600;color:var(--marrom-2);cursor:pointer;text-decoration:none;margin-right:4px;font-family:inherit;display:inline-block}
+  .rz-vazio{padding:22px;text-align:center;color:var(--marrom-2);font-size:13.5px}
+  .rz-nota{font-size:11.5px;color:#9c8a74;margin-top:10px;line-height:1.4}
   .cat-resumo{font-size:10.5px;color:#9c8a74;margin:-2px 0 7px;text-align:center}
 </style>
 </head>
@@ -166,6 +195,14 @@
     <input id="lg-senha" type="password" placeholder="senha" autocomplete="current-password" required>
     <button type="submit">Entrar</button><div class="lg-msg" id="lg-msg">Conectando…</div>
   </form></div>
+  <div class="rz-ov" id="rz" hidden><div class="rz-box" role="dialog" aria-label="Resumo dos achadinhos">
+    <div class="rz-hd"><h2>📊 Resumo dos achadinhos</h2><button type="button" class="rz-x" id="rz-x" aria-label="fechar">✕</button></div>
+    <div class="rz-kpis" id="rz-kpis"></div>
+    <div class="rz-lojas" id="rz-lojas"></div>
+    <div class="rz-filtros"><label><input type="radio" name="rzf" value="ativos" checked> Ativos</label><label><input type="radio" name="rzf" value="conferir"> ⚠ A conferir</label><label><input type="radio" name="rzf" value="encerrados"> Encerrados</label><label><input type="radio" name="rzf" value="todos"> Todos</label></div>
+    <div class="rz-tab" id="rz-tab"></div>
+    <div class="rz-nota">Cliques = toques no botão "Ver na loja" da vitrine. Vendas e comissões aparecem no painel de cada plataforma (Mercado Livre, Shopee…). "A conferir" = sem atualização há mais de 7 dias: abra o link, confira o preço e salve de novo.</div>
+  </div></div>
   <div class="userbar"><span id="quem"></span><a href="./" target="_blank" rel="noopener">🛍️ Ver vitrine</a><button type="button" id="btn-sair">Sair</button></div>
   <div class="topo">
     <h1>Baú de Achadinhos · Painel</h1>
@@ -205,6 +242,7 @@
             <label class="cat-btn" for="cat-file">📁 Importar backup</label>
             <input type="file" id="cat-file" accept="application/json,.json">
           </div>
+          <button type="button" class="cat-btn resumo-btn" id="btn-resumo">📊 Resumo dos achadinhos</button>
           <a class="cat-btn vitrine-btn" href="./" target="_blank" rel="noopener">🛍️ Abrir vitrine (baudeachadinhos.com.br)</a>
           <div class="fixo-nota" id="cat-status">Selecione pelo nome pra carregar e mudar só o que quiser.</div>
         </div>
@@ -508,7 +546,7 @@
   function thumbDe(path){return path.replace(/\.(\w+)$/,'-t.$1');}
 
   function rowToP(r){return {id:r.id,fmt:r.formato_post||'4:5',nFotos:r.n_fotos||2,selo:r.selo||(r.status==='vendido'?'vendido':r.status==='reservado'?'reservado':''),
-    paths:{1:r.foto1||'',2:r.foto2||''},nome:r.titulo,cliques:r.cliques||0,
+    paths:{1:r.foto1||'',2:r.foto2||''},nome:r.titulo,cliques:r.cliques||0,atu:r.atualizado_em,
     campos:{'in-titulo':r.titulo||'','in-desc':r.descricao||'','in-categoria':r.categoria||'','in-subcat':r.subcategoria||'','in-codigo':r.codigo||'',
       'in-rotulo':r.rotulo_tam||'','in-tam':r.tamanho||'','in-veste':r.veste||'','in-valor':numTxt(r.preco),'in-precoref':numTxt(r.preco_ref),
       'in-sinopse':r.sinopse||'','in-cap1':r.legenda1||'','in-cap2':r.legenda2||'','in-link':r.link_afiliado||'','in-loja':r.loja||''}};}
@@ -654,6 +692,45 @@
     flash('Importação concluída ✓ '+ok+' novas'+(pul?(', '+pul+' já existiam'):'')+(err?(', ⚠ '+err+' com erro (veja o console)'):''),err>0);
   }
 
+  /* ---------- RESUMO DOS ACHADINHOS ---------- */
+  function diasDesde(t){if(!t)return 999;return Math.floor((Date.now()-new Date(t).getTime())/86400000);}
+  function rzDados(){return catalogo.filter(p=>p.campos['in-categoria']==='achadinhos');}
+  function rzRender(){
+    const todos=rzDados(),ativos=todos.filter(p=>statusDe(p)!=='vendido'),enc=todos.filter(p=>statusDe(p)==='vendido');
+    const conferir=ativos.filter(p=>diasDesde(p.atu)>7);
+    const cl=todos.reduce((a,p)=>a+(p.cliques||0),0),clA=ativos.reduce((a,p)=>a+(p.cliques||0),0);
+    const top=ativos.slice().sort((a,b)=>(b.cliques||0)-(a.cliques||0))[0];
+    const k=(v,l,c)=>'<div class="rz-k'+(c?' '+c:'')+'"><b>'+v+'</b><span>'+l+'</span></div>';
+    document.getElementById('rz-kpis').innerHTML=k(ativos.length,'ofertas ativas')+k(clA,'cliques nas ativas')+k(ativos.length?(clA/ativos.length).toFixed(1).replace('.',','):'0','cliques por oferta')
+      +k(conferir.length,'a conferir (+7 dias)',conferir.length?'alerta':'')+k(enc.length,'encerradas')+k(top&&top.cliques?String(top.nome).replace(/</g,'&lt;'):'—','mais clicada','txt');
+    const lj={};todos.forEach(p=>{const l=p.campos['in-loja']||'Outra';lj[l]=lj[l]||{a:0,c:0};if(statusDe(p)!=='vendido')lj[l].a++;lj[l].c+=(p.cliques||0);});
+    document.getElementById('rz-lojas').innerHTML=Object.keys(lj).sort((a,b)=>lj[b].c-lj[a].c).map(l=>'<span class="rz-lj">🏬 '+l.replace(/</g,'&lt;')+' · '+lj[l].a+(lj[l].a===1?' ativa':' ativas')+' · 👆 '+lj[l].c+'</span>').join('')||'';
+    const f=(document.querySelector('input[name=rzf]:checked')||{}).value||'ativos';
+    let lista=f==='ativos'?ativos:f==='conferir'?conferir:f==='encerrados'?enc:todos;
+    lista=lista.slice().sort((a,b)=>(b.cliques||0)-(a.cliques||0)||diasDesde(b.atu)-diasDesde(a.atu));
+    if(!lista.length){document.getElementById('rz-tab').innerHTML='<div class="rz-vazio">'+(todos.length?'Nada nesta lista 🎉':'Nenhum achadinho cadastrado ainda. Clique em ➕ Nova peça e escolha a categoria ✨ Achadinhos.')+'</div>';return;}
+    const e=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    document.getElementById('rz-tab').innerHTML='<table><thead><tr><th></th><th>Produto</th><th>Loja</th><th>Preço</th><th>Cliques</th><th>Conferido</th><th>Status</th><th></th></tr></thead><tbody>'+lista.map(p=>{
+      const c=p.campos,d=diasDesde(p.atu),img=p.paths[1]?urlFoto(thumbDe(p.paths[1])):'';
+      return '<tr><td>'+(img?'<img src="'+e(img)+'" alt="">':'')+'</td><td><div class="tit">'+e(p.nome)+'</div><div class="cod">'+e(c['in-codigo'])+'</div></td><td>'+e(c['in-loja']||'—')+'</td>'
+        +'<td class="num">'+(c['in-valor']?'R$ '+e(c['in-valor']):'—')+'</td><td class="num">'+(p.cliques||0)+'</td>'
+        +'<td class="'+(d>7&&statusDe(p)!=='vendido'?'velho':'')+'">'+(d===0?'hoje':d===1?'ontem':d>=999?'—':'há '+d+' dias')+(d>7&&statusDe(p)!=='vendido'?' ⚠':'')+'</td>'
+        +'<td>'+(statusDe(p)==='vendido'?'⛔ encerrada':'✅ ativa')+'</td>'
+        +'<td class="acts"><button type="button" data-rz-abrir="'+e(p.id)+'">✏️ Abrir</button>'+(c['in-link']?'<a href="'+e(c['in-link'])+'" target="_blank" rel="noopener">🔗 Loja</a>':'')
+        +'<button type="button" data-rz-copiar="'+e(c['in-codigo'])+'">📋 Link do site</button></td></tr>';}).join('')+'</tbody></table>';
+  }
+  async function abrirResumo(){document.getElementById('rz').hidden=false;document.getElementById('rz-tab').innerHTML='<div class="rz-vazio">Atualizando…</div>';
+    try{await carregar(document.getElementById('cat-select').value);}catch(e){}rzRender();}
+  document.getElementById('btn-resumo').addEventListener('click',abrirResumo);
+  document.getElementById('rz-x').addEventListener('click',()=>{document.getElementById('rz').hidden=true;});
+  document.getElementById('rz').addEventListener('click',function(e){
+    if(e.target.id==='rz'){this.hidden=true;return;}
+    if(e.target.name==='rzf'){rzRender();return;}
+    const ab=e.target.closest('[data-rz-abrir]');if(ab){const p=catalogo.find(x=>x.id===ab.getAttribute('data-rz-abrir'));if(p){document.getElementById('cat-filtro').value='todos';refreshSelect(p.id);aplicarProduto(p);this.hidden=true;window.scrollTo({top:0,behavior:'smooth'});}return;}
+    const cp=e.target.closest('[data-rz-copiar]');if(cp){const u='https://www.baudeachadinhos.com.br/?q='+encodeURIComponent(cp.getAttribute('data-rz-copiar'));
+      (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>{cp.textContent='✓ copiado';setTimeout(()=>cp.textContent='📋 Link do site',1500);}).catch(()=>{prompt('Copie o link:',u);});}
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('rz').hidden=true;});
   document.getElementById('btn-salvar').addEventListener('click',salvar);
   document.getElementById('btn-vendida').addEventListener('click',marcarVendida);
   document.getElementById('btn-excluir').addEventListener('click',excluir);
