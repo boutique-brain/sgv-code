@@ -105,7 +105,8 @@
   var SUBS=[{k:'fem',n:'Feminino',e:'👗'},{k:'masc',n:'Masculino',e:'👔'},{k:'inf',n:'Infantil',e:'🧒'}];
   var ESG={moda:[2700,6],uniforme:[2700,6],sapatos:[8000,14],acessorios:[1000,2],brinquedo:[500,3],livros:[300,1],objetos:[700,3],achadinhos:[0,0]};
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  function preco(n){if(n==null||n==='')return '';n=Number(n);return 'R$ '+(n%1?n.toFixed(2).replace('.',','):String(n));}
+  function preco(n){if(n==null||n==='')return '';n=Number(n);if(isNaN(n))return '';
+    try{return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}catch(e){return 'R$ '+n.toFixed(2).replace('.',',');}}
   function mil(n){try{return Math.round(n).toLocaleString('pt-BR');}catch(e){return ''+Math.round(n);}}
   function foto(p,thumb){if(!p)return '';var f=thumb?p.replace(/\.(\w+)$/,'-t.$1'):p;return URL_+'/storage/v1/object/public/'+BUCKET+'/'+f.split('/').map(encodeURIComponent).join('/');}
   function dataBR(t){try{var d=new Date(t);return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);}catch(e){return '';}}

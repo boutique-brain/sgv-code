@@ -476,8 +476,14 @@
     document.getElementById('sel-selo').value=seloAtual;
   }
   document.getElementById('sel-selo').addEventListener('change',e=>applySelo(e.target.value));
+  function fmtPreco(v){v=String(v==null?'':v).replace(/^R\$?\s*/i,'').trim();if(!v)return '';
+    if(!/^[\d.,\s]+$/.test(v))return v;
+    var n=parseFloat(v.replace(/\./g,'').replace(',','.'));
+    if(isNaN(n))return v;
+    try{return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}catch(e){return n.toFixed(2).replace('.',',');}}
   document.getElementById('in-valor').addEventListener('input',e=>{
-    let v=e.target.value.trim();document.getElementById('p-valor').textContent=v?('R$ '+v.replace(/^R\$?\s*/i,'')):'R$ —';recompute();});
+    var raw=e.target.value,v=fmtPreco(raw);var soNumero=/^[\d.,\s]+$/.test(String(raw).replace(/^R\$?\s*/i,'').trim());
+    document.getElementById('p-valor').textContent=v?((soNumero?'R$ ':'')+v):'R$ —';recompute();});
   document.getElementById('in-veste').addEventListener('input',e=>{
     const v=e.target.value.trim();const el=document.getElementById('p-veste');
     el.textContent=v?('👶 veste '+v):'';el.style.display=v?'block':'none';recompute();});
@@ -713,7 +719,7 @@
     document.getElementById('rz-tab').innerHTML='<table><thead><tr><th></th><th>Produto</th><th>Loja</th><th>Preço</th><th>Cliques</th><th>Conferido</th><th>Status</th><th></th></tr></thead><tbody>'+lista.map(p=>{
       const c=p.campos,d=diasDesde(p.atu),img=p.paths[1]?urlFoto(thumbDe(p.paths[1])):'';
       return '<tr><td>'+(img?'<img src="'+e(img)+'" alt="">':'')+'</td><td><div class="tit">'+e(p.nome)+'</div><div class="cod">'+e(c['in-codigo'])+'</div></td><td>'+e(c['in-loja']||'—')+'</td>'
-        +'<td class="num">'+(c['in-valor']?'R$ '+e(c['in-valor']):'—')+'</td><td class="num">'+(p.cliques||0)+'</td>'
+        +'<td class="num">'+(c['in-valor']?'R$ '+e(fmtPreco(c['in-valor'])):'—')+'</td><td class="num">'+(p.cliques||0)+'</td>'
         +'<td class="'+(d>7&&statusDe(p)!=='vendido'?'velho':'')+'">'+(d===0?'hoje':d===1?'ontem':d>=999?'—':'há '+d+' dias')+(d>7&&statusDe(p)!=='vendido'?' ⚠':'')+'</td>'
         +'<td>'+(statusDe(p)==='vendido'?'⛔ encerrada':'✅ ativa')+'</td>'
         +'<td class="acts"><button type="button" data-rz-abrir="'+e(p.id)+'">✏️ Abrir</button>'+(c['in-link']?'<a href="'+e(c['in-link'])+'" target="_blank" rel="noopener">🔗 Loja</a>':'')
