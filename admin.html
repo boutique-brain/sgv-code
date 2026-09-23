@@ -264,8 +264,14 @@
             <input id="in-link" type="url" inputmode="url" placeholder="https://s.shopee.com.br/..." maxlength="600">
             <div class="linha2" style="margin-top:7px">
               <select id="in-loja" class="cat-select" style="margin:0"><option value="">— loja —</option></select>
-              <div class="afil-cliques" id="afil-cliques"></div>
+              <select id="in-entrega" class="cat-select" style="margin:0">
+                <option value="">— entrega —</option>
+                <option value="full">🚚 Full</option>
+                <option value="gratis">📦 Frete grátis</option>
+                <option value="full-gratis">🚚 Full + frete grátis</option>
+              </select>
             </div>
+            <div class="afil-cliques" id="afil-cliques" style="margin-top:7px"></div>
             <div class="fixo-nota">Cole o link gerado no programa de afiliados. A loja é reconhecida sozinha pelo link.</div>
           </div>
           <div class="campo"><label>Código do produto (automático)</label><input id="in-codigo" type="text" placeholder="gerado ao salvar" maxlength="12" readonly style="background:#f1ece0;color:var(--marrom-2);letter-spacing:1px;font-weight:700"></div>
@@ -542,7 +548,7 @@
   ligaFoto('file-2','foto2','tg-2',2);
 
   /* ---------- CATÁLOGO (Supabase) ---------- */
-  const CAMPOS=['in-titulo','in-desc','in-categoria','in-subcat','in-link','in-loja','in-codigo','in-rotulo','in-tam','in-veste','in-valor','in-precoref','in-sinopse','in-cap1','in-cap2','in-tag','in-nome','in-contato'];
+  const CAMPOS=['in-titulo','in-desc','in-categoria','in-subcat','in-link','in-loja','in-entrega','in-codigo','in-rotulo','in-tam','in-veste','in-valor','in-precoref','in-sinopse','in-cap1','in-cap2','in-tag','in-nome','in-contato'];
   const DEFAULTS={'in-cap1':'no flat lay','in-cap2':'no manequim','in-rotulo':'Nº / Manequim'};
   const CFG=window.BAU_CONFIG||{};const BUCKET=CFG.BUCKET||'fotos';
   let sb=null;let catalogo=[];let atual=null;const fotoNova={1:false,2:false};let ocupado=false;
@@ -566,11 +572,11 @@
     paths:{1:r.foto1||'',2:r.foto2||''},nome:r.titulo,cliques:r.cliques||0,atu:r.atualizado_em,
     campos:{'in-titulo':r.titulo||'','in-desc':r.descricao||'','in-categoria':r.categoria||'','in-subcat':r.subcategoria||'','in-codigo':r.codigo||'',
       'in-rotulo':r.rotulo_tam||'','in-tam':r.tamanho||'','in-veste':r.veste||'','in-valor':numTxt(r.preco),'in-precoref':numTxt(r.preco_ref),
-      'in-sinopse':r.sinopse||'','in-cap1':r.legenda1||'','in-cap2':r.legenda2||'','in-link':r.link_afiliado||'','in-loja':r.loja||''}};}
+      'in-sinopse':r.sinopse||'','in-cap1':r.legenda1||'','in-cap2':r.legenda2||'','in-link':r.link_afiliado||'','in-loja':r.loja||'','in-entrega':r.entrega||''}};}
   function camposToRow(c,selo,fmt,nf){return {codigo:c['in-codigo'],titulo:(c['in-titulo']||'Sem nome').trim()||'Sem nome',descricao:c['in-desc']||null,
     categoria:c['in-categoria']||null,subcategoria:(c['in-categoria']==='moda'&&c['in-subcat'])||null,rotulo_tam:c['in-rotulo']||null,tamanho:c['in-tam']||null,
     veste:c['in-veste']||null,preco:num(c['in-valor']),preco_ref:num(c['in-precoref']),sinopse:c['in-sinopse']||null,legenda1:c['in-cap1']||null,legenda2:c['in-cap2']||null,
-    link_afiliado:(c['in-categoria']==='achadinhos'&&c['in-link'].trim())||null,loja:(c['in-categoria']==='achadinhos'&&c['in-loja'])||null,
+    link_afiliado:(c['in-categoria']==='achadinhos'&&c['in-link'].trim())||null,loja:(c['in-categoria']==='achadinhos'&&c['in-loja'])||null,entrega:(c['in-categoria']==='achadinhos'&&c['in-entrega'])||null,
     selo:selo||null,status:selo==='vendido'?'vendido':selo==='reservado'?'reservado':'disponivel',formato_post:fmt||'4:5',n_fotos:nf==1?1:2};}
 
   function ordenar(){catalogo.sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt',{sensitivity:'base',numeric:true}));}

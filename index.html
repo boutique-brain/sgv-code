@@ -16,6 +16,8 @@
 .affbtn{display:block;text-align:center;text-decoration:none;background:linear-gradient(135deg,#ee6a2d,#d24b12)!important;color:#fff!important}
 .card[data-cat="achadinhos"] .ctag{background:#fdebd9;color:#b3480f}
 .cloja{display:inline-block;font-size:11.5px;font-weight:800;color:#b3480f;margin-top:3px}
+.cloja img.clogo{height:18px;width:auto;max-width:96px;display:inline-block;vertical-align:middle;object-fit:contain}
+.centrega{display:inline-block;margin:4px 0 0 6px;font-size:11px;font-weight:800;color:#1f6b33;background:#e8f5ec;border:1px solid #b6ddc2;border-radius:20px;padding:2px 8px;vertical-align:middle}
 .cafil{font-size:10.5px;color:#9c8a74;margin-top:5px;line-height:1.3}
 .affnote{display:block;margin-top:6px;font-size:11px;color:#9c8a74}
 .vbanner{position:relative;overflow:hidden;background:#caa66a;line-height:0;border-bottom:3px solid #c9a24a}
@@ -110,6 +112,13 @@
     try{return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}catch(e){return 'R$ '+n.toFixed(2).replace('.',',');}}
   function mil(n){try{return Math.round(n).toLocaleString('pt-BR');}catch(e){return ''+Math.round(n);}}
   function foto(p,thumb){if(!p)return '';var f=thumb?p.replace(/\.(\w+)$/,'-t.$1'):p;return URL_+'/storage/v1/object/public/'+BUCKET+'/'+f.split('/').map(encodeURIComponent).join('/');}
+  function slugLoja(l){return norm(l).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+  function lojaTag(l){if(!l)return '';var sl=slugLoja(l);
+    return '<span class="cloja"><img src="lojas/'+sl+'.png" alt="'+esc(l)+'" class="clogo" loading="lazy" '
+      +'onerror="this.onerror=null;this.replaceWith(document.createTextNode(\'🏬 '+esc(l)+'\'))"></span>';}
+  function entregaTag(e){if(!e)return '';
+    var t=e==='full'?'🚚 Full':e==='gratis'?'📦 Frete grátis':e==='full-gratis'?'🚚 Full · frete grátis':'';
+    return t?'<span class="centrega">'+t+'</span>':'';}
   function dataBR(t){try{var d=new Date(t);return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);}catch(e){return '';}}
   function norm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();}
   function api(path){return fetch(URL_+'/rest/v1/'+path,{headers:{apikey:KEY,Authorization:'Bearer '+KEY}}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();});}
@@ -164,7 +173,7 @@
         +(tagTxt?'<span class="ctag">'+esc(tagTxt)+'</span>':'')
         +'<div class="ctit">'+esc(d.titulo)+'</div>'+(d.descricao?'<div class="cdesc">'+esc(d.descricao)+'</div>':'')
         +'<div class="ccod">'+esc(d.codigo)+'</div>'
-        +(ach?(d.loja?'<span class="cloja">🏬 '+esc(d.loja)+'</span>':'')
+        +(ach?(lojaTag(d.loja)+entregaTag(d.entrega))
              :(d.tamanho?'<div class="cmeta">'+esc(d.rotulo_tam||'Nº')+': '+esc(d.tamanho)+'</div>':''))
         +(d.veste?'<div class="cveste">👶 veste '+esc(d.veste)+'</div>':'')
 
@@ -297,7 +306,7 @@
   if(!URL_||/SEU-PROJETO/.test(URL_)){estado('⚙️ Configure o arquivo config.js com os dados do Supabase.');return;}
   Promise.all([
     api('config?select=slogan,complemento,contato,whatsapp&id=eq.1').then(function(r){return r[0];}).catch(function(){return null;}),
-    api('pecas?select=codigo,titulo,descricao,categoria,subcategoria,rotulo_tam,tamanho,veste,preco,preco_ref,sinopse,status,selo,foto1,foto2,link_afiliado,loja,atualizado_em&status=neq.vendido&order=criado_em.desc')
+    api('pecas?select=codigo,titulo,descricao,categoria,subcategoria,rotulo_tam,tamanho,veste,preco,preco_ref,sinopse,status,selo,foto1,foto2,link_afiliado,loja,entrega,atualizado_em&status=neq.vendido&order=criado_em.desc')
   ]).then(function(r){render(r[0],r[1]);})
     .catch(function(err){console.error(err);estado('Não consegui abrir o baú agora 😕<br>Atualize a página em instantes.');});
 })();

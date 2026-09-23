@@ -1,0 +1,33 @@
+LOGOS DAS LOJAS PARCEIRAS (achadinhos)
+======================================
+
+O site procura o logo da loja neste formato:
+
+    lojas/<nome-da-loja-em-minusculo-com-hifen>.png
+
+Exemplos (o nome vem do campo "Loja" no painel admin):
+
+    Loja no admin      ->  arquivo que o site procura
+    -------------------------------------------------
+    Mercado Livre      ->  lojas/mercado-livre.png
+    Shopee             ->  lojas/shopee.png
+    Amazon             ->  lojas/amazon.png
+    Magalu             ->  lojas/magalu.png
+    AliExpress         ->  lojas/aliexpress.png
+
+Se o arquivo nao existir, o cartao mostra o nome escrito (ex.: 🏬 Mercado Livre).
+Ou seja: nada quebra, e basta colocar o arquivo para o logo aparecer.
+
+COMO DEVE SER O ARQUIVO
+-----------------------
+- PNG com fundo transparente
+- altura de 40 px (a largura pode variar); o site exibe com 18 px de altura
+- use o arquivo OFICIAL que cada programa de afiliados disponibiliza
+  (sao marcas registradas; nao vale recriar ou redesenhar o logo)
+
+ONDE BAIXAR O OFICIAL
+---------------------
+- Mercado Livre : painel de Afiliados > "Ferramentas" / "Material de divulgacao"
+- Shopee        : painel do Afiliado > "Recursos" / "Kit de midia"
+- Amazon        : Amazon Associates > "Recursos da marca" (Brand Usage Guidelines)
+- Magalu        : painel Parceiro Magalu > material de divulgacao
