@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Baú de Achadinhos • autorização do Mercado Livre</title>
+<style>
+:root{--bg:#efe7d6;--card:#fff;--marrom:#4a3526;--marrom2:#6d5137;--destaque:#a8703c;--verde:#4e6b2d}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--marrom);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:var(--card);border-radius:16px;box-shadow:0 8px 26px rgba(74,53,38,.16);padding:26px 24px;max-width:560px;width:100%}
+h1{font-size:19px;margin-bottom:4px}
+.sub{font-size:13px;color:var(--marrom2);margin-bottom:18px}
+.rotulo{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--destaque);margin-bottom:6px}
+#cod{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;word-break:break-all;background:#f6ecd9;border:1.5px solid #e0cda6;
+  border-radius:10px;padding:13px 14px;line-height:1.45;user-select:all}
+button{margin-top:12px;width:100%;background:var(--verde);color:#fff;border:none;border-radius:10px;padding:12px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+button:hover{filter:brightness(1.08)}
+button.ok{background:var(--destaque)}
+ol{margin:18px 0 0 18px;font-size:13.5px;line-height:1.75;color:var(--marrom2)}
+code{background:#f6ecd9;padding:2px 6px;border-radius:6px;font-size:12.5px;word-break:break-all}
+.erro{background:#fdeceb;border:1.5px solid #f0c2bd;color:#9e2b1f;border-radius:10px;padding:13px 14px;font-size:13.5px;line-height:1.5}
+.nota{margin-top:16px;font-size:12px;color:#9c8a74;line-height:1.5;border-top:1px solid #ecdfc6;padding-top:13px}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>Autorização do Mercado Livre</h1>
+  <p class="sub">Esta página só recebe o código da autorização. Ela não guarda nada.</p>
+  <div id="area"></div>
+  <p class="nota">Se você chegou aqui sem querer, pode fechar. Esta página faz parte do painel do Baú de Achadinhos
+  e não coleta nenhum dado seu.</p>
+</div>
+<script>
+(function(){
+  var p = new URLSearchParams(location.search);
+  var code = p.get('code'), erro = p.get('error'), desc = p.get('error_description');
+  var area = document.getElementById('area');
+
+  if (erro) {
+    area.innerHTML = '<div class="erro"><b>O Mercado Livre recusou a autorização.</b><br>'
+      + esc(erro) + (desc ? ('<br>' + esc(desc)) : '')
+      + '<br><br>O motivo mais comum é a <b>redirect URI</b> cadastrada no aplicativo estar diferente desta página.</div>';
+    return;
+  }
+
+  if (!code) {
+    area.innerHTML = '<div class="erro">Nenhum código na URL.<br><br>'
+      + 'Você precisa chegar aqui <b>pelo link de autorização do Mercado Livre</b>, não digitando o endereço direto.</div>';
+    return;
+  }
+
+  area.innerHTML =
+      '<div class="rotulo">Código da autorização</div>'
+    + '<div id="cod"></div>'
+    + '<button type="button" id="copiar">Copiar código</button>'
+    + '<ol>'
+    +   '<li>Copie o código acima.</li>'
+    +   '<li>Abra o <b>Supabase</b> &rsaquo; <b>SQL Editor</b> &rsaquo; <b>New query</b>.</li>'
+    +   '<li>Rode: <code>select ml_trocar_codigo(\'COLE_O_CODIGO_AQUI\');</code></li>'
+    +   '<li>Deve responder <b>ok</b>. A partir daí a renovação é automática.</li>'
+    + '</ol>';
+  document.getElementById('cod').textContent = code;
+
+  document.getElementById('copiar').addEventListener('click', function(){
+    var b = this;
+    navigator.clipboard.writeText(code).then(function(){
+      b.textContent = 'Copiado ✓'; b.classList.add('ok');
+      setTimeout(function(){ b.textContent = 'Copiar código'; b.classList.remove('ok'); }, 2200);
+    }).catch(function(){
+      b.textContent = 'Selecione o código acima e copie com Ctrl+C';
+    });
+  });
+
+  function esc(s){ return String(s).replace(/[<>&]/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c]; }); }
+})();
+</script>
+</body>
+</html>
