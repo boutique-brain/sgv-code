@@ -236,6 +236,7 @@
           <div class="cat-resumo" id="cat-resumo"></div>
           <select id="cat-select" class="cat-select"><option value="">— novo produto —</option></select>
           <button type="button" class="cat-btn" id="btn-nova" style="width:100%;margin-bottom:8px">➕ Nova peça (limpar formulário)</button>
+          <button type="button" class="cat-btn" id="btn-clonar" style="width:100%;margin-bottom:8px">⧉ Clonar esta peça</button>
           <div class="cat-botoes">
             <button type="button" class="cat-btn salvar" id="btn-salvar">💾 Salvar</button>
             <button type="button" class="cat-btn vendida" id="btn-vendida">❤ Vendida</button>
@@ -619,6 +620,21 @@
     applySelo('');applyFotos(2);setFoto(1,'');setFoto(2,'');fotoNova[1]=fotoNova[2]=false;toggleSub();document.getElementById('afil-cliques').textContent='';
     document.getElementById('cat-select').value='';recompute();
   }
+  // duplica a peça aberta: mantém tudo preenchido, mas vira um cadastro novo
+  function clonar(){
+    if(!atual)return flash('Selecione uma peça do catálogo para clonar.',true);
+    var nome=atual.nome||atual.campos['in-titulo']||'esta peça';
+    atual=null;                                   // o próximo Salvar cria um registro novo
+    document.getElementById('in-codigo').value='';// código sai em branco: é gerado no Salvar
+    applySelo('');                                // clone nasce disponível, nunca vendido/reservado
+    document.getElementById('afil-cliques').textContent='';
+    // as fotos já estão carregadas no formulário; marcadas como novas, o Salvar sobe cópias próprias
+    fotoNova[1]=!!fotoData[1];fotoNova[2]=!!fotoData[2];
+    document.getElementById('cat-select').value='';
+    recompute();
+    var t=document.getElementById('in-titulo');t.focus();t.select();
+    flash('⧉ Cópia de "'+nome+'". Ajuste cor, tamanho e valor e clique em 💾 Salvar.');
+  }
   ['file-1','file-2'].forEach((id,i)=>document.getElementById(id).addEventListener('change',()=>{fotoNova[i+1]=true;}));
 
   // gera versão cheia (1080) e miniatura (640) em JPG a partir de uma imagem (dataURL)
@@ -760,6 +776,7 @@
   document.getElementById('btn-backup').addEventListener('click',backup);
   document.getElementById('cat-select').addEventListener('change',e=>{const v=e.target.value;if(!v){novaPeca();return;}const p=catalogo.find(x=>x.id===v);if(p)aplicarProduto(p);});
   document.getElementById('btn-nova').addEventListener('click',novaPeca);
+  document.getElementById('btn-clonar').addEventListener('click',clonar);
   document.getElementById('cat-filtro').addEventListener('change',function(){refreshSelect('');});
   document.getElementById('btn-preco').addEventListener('click',function(){var t=(document.getElementById('in-titulo').value||'').trim();if(!t)return flash('Preencha o título da peça primeiro.');window.open('https://www.google.com/search?tbm=shop&q='+encodeURIComponent(t+' novo'),'_blank');});
   document.getElementById('cat-file').addEventListener('change',function(){
