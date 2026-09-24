@@ -43,6 +43,9 @@
 .vsres b{color:var(--marrom)}
 .card.qhide{display:none!important}
 #vbar label[for="f-all"]{display:none}
+#vbar,.subbar{position:sticky;background:var(--bg);box-shadow:0 8px 10px -9px rgba(74,53,38,.45)}
+#vbar{top:var(--topbar,62px);z-index:41}
+.subbar{top:calc(var(--topbar,62px) + var(--barh,57px));z-index:40}
 .qvazio{grid-column:1/-1;text-align:center;padding:30px 12px;color:var(--marrom2);font-size:15px;line-height:1.5}
 @media(min-width:1180px){.grid{max-width:1880px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;padding:14px 24px}.chips{max-width:1880px;margin:0 auto;padding-left:24px;padding-right:24px}.vsres{max-width:1880px}}
 .vnovos{display:none}
@@ -192,7 +195,7 @@
     // tira do carrinho peças que já foram vendidas
     try{var cart=JSON.parse(localStorage.getItem('brechoCarrinho')||'{}')||{},ok={},mud=false;itens.forEach(function(d){ok[d.codigo]=1;});
       Object.keys(cart).forEach(function(k){if(!ok[k]){delete cart[k];mud=true;}});if(mud)localStorage.setItem('brechoCarrinho',JSON.stringify(cart));}catch(e){}
-    aplicarBusca();
+    aplicarBusca();medirBarras();
     montarNovos(itens);
     (function vitrineNav(){
     var bs=document.querySelectorAll('.cnav');
@@ -271,6 +274,11 @@
     [].forEach.call(l.children,function(c,i){c.style.display=i<n?'':'none';});
     var col=Math.min(180,(w-12*(n-1))/n);l.style.gridAutoColumns=col+'px';}
   window.addEventListener('resize',ajustarNovos);
+  // mantém o menu de categorias colado embaixo da barra de busca ao rolar
+  function medirBarras(){var s=document.getElementById('vbusca'),b=document.getElementById('vbar'),r=document.documentElement;
+    if(s)r.style.setProperty('--topbar',Math.round(s.getBoundingClientRect().height)+'px');
+    if(b)r.style.setProperty('--barh',Math.round(b.getBoundingClientRect().height)+'px');}
+  window.addEventListener('resize',medirBarras);
   document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.vnitem');if(!b)return;
     qIn.value=b.getAttribute('data-cod');aplicarBusca();syncUrl();var g=document.querySelector('.grid');if(g)window.scrollTo({top:g.getBoundingClientRect().top+window.scrollY-80,behavior:'smooth'});});
   // ---- busca global (como no Mercado Livre): procura em todas as categorias
