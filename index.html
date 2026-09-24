@@ -50,7 +50,7 @@
 .vnovos{display:flex;flex-direction:column;position:absolute;top:22px;bottom:22px;left:1060px;right:28px;background:rgba(255,250,240,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:18px;padding:14px 18px;box-shadow:0 8px 26px rgba(60,40,10,.18);line-height:1.2;overflow:hidden}
 .vnovos h2{margin:0 0 10px;font-size:18px;color:#4a3526;display:flex;align-items:center;justify-content:space-between}
 .vnovos h2 small{font-size:12px;font-weight:600;color:#8a6f52}
-.vnlist{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(120px,1fr);gap:12px;flex:1;min-height:0;overflow:hidden}
+.vnlist{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(120px,1fr);gap:12px;flex:1;min-height:0;overflow:hidden;justify-content:center}
 .vnitem{display:flex;flex-direction:column;background:#fff;border-radius:12px;overflow:hidden;cursor:pointer;border:none;padding:0;text-align:left;box-shadow:0 2px 8px rgba(60,40,10,.12);transition:transform .15s;min-width:0;font:inherit}
 .vnitem:hover{transform:translateY(-3px)}
 .vnitem img{width:100%;flex:1;min-height:0;object-fit:cover;display:block;background:#efe3cc}
@@ -259,15 +259,16 @@
   // ---- painel "Acabou de chegar" (só em telas largas)
   function montarNovos(itens){
     var box=document.getElementById('vnovos');if(!box)return;
-    var lista=itens.filter(function(d){return d.foto1||d.foto2;}).slice(0,10);
+    var lista=itens.filter(function(d){return d.foto1||d.foto2;}).slice(0,3);
     if(!lista.length){box.remove();return;}
     box.innerHTML='<h2>✨ Acabou de chegar <small>toque para ver</small></h2><div class="vnlist">'+lista.map(function(d){
       var f=(d.categoria==='livros'?d.foto1:(d.foto2||d.foto1))||d.foto1;
       return '<button type="button" class="vnitem" data-cod="'+esc(d.codigo)+'"><img src="'+esc(foto(f,true))+'" alt="" loading="lazy"><span>'+esc(d.titulo)+'</span><b>'+(Number(d.preco)?preco(d.preco):'')+'</b></button>';}).join('')+'</div>';
     ajustarNovos();
   }
-  function ajustarNovos(){var l=document.querySelector('.vnlist');if(!l)return;var w=l.clientWidth,n=Math.max(1,Math.floor((w+12)/132));
-    [].forEach.call(l.children,function(c,i){c.style.display=i<n?'':'none';});l.style.gridAutoColumns='calc((100% - '+(12*(n-1))+'px)/'+n+')';}
+  function ajustarNovos(){var l=document.querySelector('.vnlist');if(!l)return;var w=l.clientWidth,n=Math.min(3,Math.max(1,Math.floor((w+12)/132)));
+    [].forEach.call(l.children,function(c,i){c.style.display=i<n?'':'none';});
+    var col=Math.min(210,(w-12*(n-1))/n);l.style.gridAutoColumns=col+'px';}
   window.addEventListener('resize',ajustarNovos);
   document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.vnitem');if(!b)return;
     qIn.value=b.getAttribute('data-cod');aplicarBusca();syncUrl();var g=document.querySelector('.grid');if(g)window.scrollTo({top:g.getBoundingClientRect().top+window.scrollY-80,behavior:'smooth'});});
