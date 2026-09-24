@@ -320,7 +320,7 @@
   if(!URL_||/SEU-PROJETO/.test(URL_)){estado('⚙️ Configure o arquivo config.js com os dados do Supabase.');return;}
   Promise.all([
     api('config?select=slogan,complemento,contato,whatsapp&id=eq.1').then(function(r){return r[0];}).catch(function(){return null;}),
-    api('pecas?select=codigo,titulo,descricao,categoria,subcategoria,rotulo_tam,tamanho,veste,preco,preco_ref,sinopse,status,selo,foto1,foto2,link_afiliado,loja,entrega,atualizado_em&status=neq.vendido&order=criado_em.desc')
+    api('pecas?select=codigo,titulo,descricao,categoria,subcategoria,rotulo_tam,tamanho,veste,preco,preco_ref,sinopse,status,selo,foto1,foto2,link_afiliado,loja,entrega,disponivel,atualizado_em&status=neq.vendido&disponivel=is.true&order=criado_em.desc')
   ]).then(function(r){render(r[0],r[1]);})
     .catch(function(err){console.error(err);estado('Não consegui abrir o baú agora 😕<br>Atualize a página em instantes.');});
 })();

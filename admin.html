@@ -185,6 +185,11 @@
   .rz-tab img{width:42px;height:42px;object-fit:cover;border-radius:8px;display:block;background:#efe3cc}
   .rz-tab .tit{font-weight:700}.rz-tab .cod{font-size:11px;color:#9c8a74}
   .rz-tab .velho{color:#b3480f;font-weight:700}
+  .rz-tab .fora{color:#ab2a1e}
+  .rz-tab .nota{font-size:10.5px;color:#9c8a74;font-weight:500;margin-top:2px}
+  .rz-tab .acts button.ok{border-color:#bcd3a4;background:#f1f7e9;color:#3f5c22}
+  .rz-tab .acts button.ruim{border-color:#e8c4bd;background:#fdf1ef;color:#9e2b1f}
+  .rz-tab .acts button:disabled{opacity:.6;cursor:default}
   .rz-tab .acts{white-space:nowrap}
   .rz-tab .acts button,.rz-tab .acts a{border:1px solid #e6dcc7;background:#fdfbf5;border-radius:8px;padding:5px 8px;font-size:11.5px;font-weight:600;color:var(--marrom-2);cursor:pointer;text-decoration:none;margin-right:4px;font-family:inherit;display:inline-block}
   .rz-vazio{padding:22px;text-align:center;color:var(--marrom-2);font-size:13.5px}
@@ -205,7 +210,7 @@
     <div class="rz-lojas" id="rz-lojas"></div>
     <div class="rz-filtros"><label><input type="radio" name="rzf" value="ativos" checked> Ativos</label><label><input type="radio" name="rzf" value="conferir"> ⚠ A conferir</label><label><input type="radio" name="rzf" value="encerrados"> Encerrados</label><label><input type="radio" name="rzf" value="todos"> Todos</label></div>
     <div class="rz-tab" id="rz-tab"></div>
-    <div class="rz-nota">Cliques = toques no botão "Ver na loja" da vitrine. Vendas e comissões aparecem no painel de cada plataforma (Mercado Livre, Shopee…). "A conferir" = sem atualização há mais de 7 dias: abra o link, confira o preço e salve de novo.</div>
+    <div class="rz-nota">Cliques = toques no botão "Ver na loja" da vitrine. Vendas e comissões aparecem no painel de cada plataforma (Mercado Livre, Shopee…). "A conferir" = sem conferência há mais de 7 dias. Abra o anúncio pelo 🔗 e volte aqui: ✓ Conferi mantém na vitrine e zera a contagem; 🚫 Saiu do ar tira da vitrine na hora, sem apagar nada — dá para reverter com ↩ Voltou.</div>
   </div></div>
   <div class="userbar"><span id="quem"></span><a href="./" target="_blank" rel="noopener">🛍️ Ver vitrine</a><button type="button" id="btn-sair">Sair</button></div>
   <div class="topo">
@@ -571,6 +576,7 @@
 
   function rowToP(r){return {id:r.id,fmt:r.formato_post||'4:5',nFotos:r.n_fotos||2,selo:r.selo||(r.status==='vendido'?'vendido':r.status==='reservado'?'reservado':''),
     paths:{1:r.foto1||'',2:r.foto2||''},nome:r.titulo,cliques:r.cliques||0,atu:r.atualizado_em,
+    conf:r.checado_em||null,disp:r.disponivel!==false,nota:r.checagem_nota||'',
     campos:{'in-titulo':r.titulo||'','in-desc':r.descricao||'','in-categoria':r.categoria||'','in-subcat':r.subcategoria||'','in-codigo':r.codigo||'',
       'in-rotulo':r.rotulo_tam||'','in-tam':r.tamanho||'','in-veste':r.veste||'','in-valor':numTxt(r.preco),'in-precoref':numTxt(r.preco_ref),
       'in-sinopse':r.sinopse||'','in-cap1':r.legenda1||'','in-cap2':r.legenda2||'','in-link':r.link_afiliado||'','in-loja':r.loja||'','in-entrega':r.entrega||''}};}
@@ -736,12 +742,13 @@
   function rzDados(){return catalogo.filter(p=>p.campos['in-categoria']==='achadinhos');}
   function rzRender(){
     const todos=rzDados(),ativos=todos.filter(p=>statusDe(p)!=='vendido'),enc=todos.filter(p=>statusDe(p)==='vendido');
-    const conferir=ativos.filter(p=>diasDesde(p.atu)>7);
+    const conferir=ativos.filter(p=>p.disp===false||diasDesde(p.conf||p.atu)>7);
+    const fora=ativos.filter(p=>p.disp===false);
     const cl=todos.reduce((a,p)=>a+(p.cliques||0),0),clA=ativos.reduce((a,p)=>a+(p.cliques||0),0);
     const top=ativos.slice().sort((a,b)=>(b.cliques||0)-(a.cliques||0))[0];
     const k=(v,l,c)=>'<div class="rz-k'+(c?' '+c:'')+'"><b>'+v+'</b><span>'+l+'</span></div>';
     document.getElementById('rz-kpis').innerHTML=k(ativos.length,'ofertas ativas')+k(clA,'cliques nas ativas')+k(ativos.length?(clA/ativos.length).toFixed(1).replace('.',','):'0','cliques por oferta')
-      +k(conferir.length,'a conferir (+7 dias)',conferir.length?'alerta':'')+k(enc.length,'encerradas')+k(top&&top.cliques?String(top.nome).replace(/</g,'&lt;'):'—','mais clicada','txt');
+      +k(conferir.length,'a conferir (+7 dias)',conferir.length?'alerta':'')+k(fora.length,'fora do ar',fora.length?'alerta':'')+k(enc.length,'encerradas')+k(top&&top.cliques?String(top.nome).replace(/</g,'&lt;'):'—','mais clicada','txt');
     const lj={};todos.forEach(p=>{const l=p.campos['in-loja']||'Outra';lj[l]=lj[l]||{a:0,c:0};if(statusDe(p)!=='vendido')lj[l].a++;lj[l].c+=(p.cliques||0);});
     document.getElementById('rz-lojas').innerHTML=Object.keys(lj).sort((a,b)=>lj[b].c-lj[a].c).map(l=>'<span class="rz-lj">🏬 '+l.replace(/</g,'&lt;')+' · '+lj[l].a+(lj[l].a===1?' ativa':' ativas')+' · 👆 '+lj[l].c+'</span>').join('')||'';
     const f=(document.querySelector('input[name=rzf]:checked')||{}).value||'ativos';
@@ -750,13 +757,40 @@
     if(!lista.length){document.getElementById('rz-tab').innerHTML='<div class="rz-vazio">'+(todos.length?'Nada nesta lista 🎉':'Nenhum achadinho cadastrado ainda. Clique em ➕ Nova peça e escolha a categoria ✨ Achadinhos.')+'</div>';return;}
     const e=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
     document.getElementById('rz-tab').innerHTML='<table><thead><tr><th></th><th>Produto</th><th>Loja</th><th>Preço</th><th>Cliques</th><th>Conferido</th><th>Status</th><th></th></tr></thead><tbody>'+lista.map(p=>{
-      const c=p.campos,d=diasDesde(p.atu),img=p.paths[1]?urlFoto(thumbDe(p.paths[1])):'';
+      const c=p.campos,vend=statusDe(p)==='vendido',d=diasDesde(p.conf||p.atu),img=p.paths[1]?urlFoto(thumbDe(p.paths[1])):'';
+      const atrasado=!vend&&d>7, sumiu=!vend&&p.disp===false;
       return '<tr><td>'+(img?'<img src="'+e(img)+'" alt="">':'')+'</td><td><div class="tit">'+e(p.nome)+'</div><div class="cod">'+e(c['in-codigo'])+'</div></td><td>'+e(c['in-loja']||'—')+'</td>'
         +'<td class="num">'+(c['in-valor']?'R$ '+e(fmtPreco(c['in-valor'])):'—')+'</td><td class="num">'+(p.cliques||0)+'</td>'
-        +'<td class="'+(d>7&&statusDe(p)!=='vendido'?'velho':'')+'">'+(d===0?'hoje':d===1?'ontem':d>=999?'—':'há '+d+' dias')+(d>7&&statusDe(p)!=='vendido'?' ⚠':'')+'</td>'
-        +'<td>'+(statusDe(p)==='vendido'?'⛔ encerrada':'✅ ativa')+'</td>'
-        +'<td class="acts"><button type="button" data-rz-abrir="'+e(p.id)+'">✏️ Abrir</button>'+(c['in-link']?'<a href="'+e(c['in-link'])+'" target="_blank" rel="noopener">🔗 Loja</a>':'')
+        +'<td class="'+(atrasado?'velho':'')+'">'+(d===0?'hoje':d===1?'ontem':d>=999?'nunca':'há '+d+' dias')+(atrasado?' ⚠':'')+'</td>'
+        +'<td>'+(vend?'⛔ encerrada':sumiu?'<b class="fora">🚫 fora do ar</b>':'✅ ativa')+(p.nota&&!vend?'<div class="nota">'+e(p.nota)+'</div>':'')+'</td>'
+        +'<td class="acts">'+(c['in-link']?'<a href="'+e(c['in-link'])+'" target="_blank" rel="noopener">🔗 Anúncio</a>':'')
+        +(vend?'':'<button type="button" class="ok" data-rz-ok="'+e(p.id)+'">✓ Conferi</button>'
+               +'<button type="button" class="ruim" data-rz-fora="'+e(p.id)+'">'+(sumiu?'↩ Voltou':'🚫 Saiu do ar')+'</button>')
+        +'<button type="button" data-rz-abrir="'+e(p.id)+'">✏️ Abrir</button>'
         +'<button type="button" data-rz-copiar="'+e(c['in-codigo'])+'">📋 Link do site</button></td></tr>';}).join('')+'</tbody></table>';
+  }
+  // marca a conferência de um achadinho. p_disp: true = está no ar, null = alterna no ar / fora do ar
+  async function rzConferir(id, p_disp, btn){
+    const p=catalogo.find(x=>x.id===id);if(!p)return;
+    // "✓ Conferi" sempre confirma que está no ar; o outro botão alterna
+    const fora = (p.disp === false);
+    const novo = (p_disp === true) ? true : fora;   // se estava fora, o botão vira "↩ Voltou"
+    const texto = novo ? (fora ? 'voltou ao ar' : 'conferido por você') : 'marcado como fora do ar';
+    const antes = btn?btn.textContent:'';
+    if(btn){btn.disabled=true;btn.textContent='…';}
+    try{
+      const r=await sb.from('pecas')
+        .update({disponivel:novo, checado_em:new Date().toISOString(), checagem_nota:texto})
+        .eq('id',id).select().single();
+      if(r.error)throw r.error;
+      p.disp=novo;p.conf=r.data.checado_em;p.nota=texto;
+      rzRender();
+      flash(novo?('✓ '+p.nome+' conferido — segue na vitrine'):('🚫 '+p.nome+' marcado como fora do ar — saiu da vitrine'));
+    }catch(err){
+      console.error(err);
+      if(btn){btn.disabled=false;btn.textContent=antes;}
+      flash('⚠ Não consegui salvar a conferência: '+(err.message||err),true);
+    }
   }
   async function abrirResumo(){document.getElementById('rz').hidden=false;document.getElementById('rz-tab').innerHTML='<div class="rz-vazio">Atualizando…</div>';
     try{await carregar(document.getElementById('cat-select').value);}catch(e){}rzRender();}
@@ -765,6 +799,8 @@
   document.getElementById('rz').addEventListener('click',function(e){
     if(e.target.id==='rz'){this.hidden=true;return;}
     if(e.target.name==='rzf'){rzRender();return;}
+    const ok=e.target.closest('[data-rz-ok]');if(ok){rzConferir(ok.getAttribute('data-rz-ok'),true,ok);return;}
+    const fr=e.target.closest('[data-rz-fora]');if(fr){rzConferir(fr.getAttribute('data-rz-fora'),null,fr);return;}
     const ab=e.target.closest('[data-rz-abrir]');if(ab){const p=catalogo.find(x=>x.id===ab.getAttribute('data-rz-abrir'));if(p){document.getElementById('cat-filtro').value='todos';refreshSelect(p.id);aplicarProduto(p);this.hidden=true;window.scrollTo({top:0,behavior:'smooth'});}return;}
     const cp=e.target.closest('[data-rz-copiar]');if(cp){const u='https://www.baudeachadinhos.com.br/?q='+encodeURIComponent(cp.getAttribute('data-rz-copiar'));
       (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>{cp.textContent='✓ copiado';setTimeout(()=>cp.textContent='📋 Link do site',1500);}).catch(()=>{prompt('Copie o link:',u);});}
