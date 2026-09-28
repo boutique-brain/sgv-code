@@ -121,9 +121,14 @@
     <!-- ABA VENDAS -->
     <div id="tab-vendas" class="hid">
       <div class="kpis" id="vendasKpis"></div>
+      <h2 style="font-size:16px;margin:6px 0 2px">💰 Peças vendidas</h2>
+      <div class="sub" id="vendidasInfo" style="margin-bottom:8px"></div>
+      <div id="vendidasLista" class="lista"></div>
+      <div id="vendidasVazio" class="empty hid">Nenhuma peça marcada como vendida ainda.</div>
+      <h2 style="font-size:16px;margin:22px 0 2px">🧾 Pedidos do carrinho</h2>
       <div class="sub" id="vendasInfo" style="margin-bottom:8px"></div>
       <div id="vendasLista"></div>
-      <div id="vendasVazio" class="empty hid">Nenhum pedido registrado ainda. Assim que um cliente finalizar no carrinho, aparece aqui.</div>
+      <div id="vendasVazio" class="empty hid">Nenhum pedido pelo carrinho ainda. Assim que um cliente finalizar no WhatsApp, aparece aqui.</div>
     </div>
 
     <!-- ABA ADICIONAR -->
@@ -393,20 +398,33 @@ $("btnAdd").addEventListener("click",async()=>{
 /* ---------- VENDAS ---------- */
 async function carregarVendas(){
   $("vendasLista").innerHTML='<div class="spin"></div>';$("vendasVazio").classList.add("hid");
+  $("vendidasLista").innerHTML='';$("vendidasVazio").classList.add("hid");
+  // ---- peças já vendidas (da tabela de peças) ----
+  const rv=await db.from("pecas").select("codigo,titulo,categoria,preco,foto1").eq("status","vendido").order("atualizado_em",{ascending:false});
+  var vend=rv.data||[],totVend=0;vend.forEach(p=>totVend+=Number(p.preco)||0);
+  $("vendidasVazio").classList.toggle("hid",vend.length>0);
+  $("vendidasInfo").textContent=vend.length?(vend.length+" peça(s) marcada(s) como vendida(s)"):"";
+  $("vendidasLista").innerHTML=vend.map(p=>{
+    var img=p.foto1?('<img class="pcimg" loading="lazy" src="'+esc(fotoURL(p.foto1,true))+'">'):'<div class="pcimg"></div>';
+    return '<div class="pc sold"><span class="badge b-vendido">VENDIDA</span>'+img+'<div class="pcb">'
+      +'<div class="pctit">'+esc(p.titulo)+'</div><div class="pccod">'+esc(p.codigo)+' · '+esc(CATNOME[p.categoria]||p.categoria||"")+'</div>'
+      +'<div class="pcpreco">'+preco(p.preco)+'</div>'
+      +'<div class="pcacts"><button class="mini sec" data-desmarca="'+esc(p.codigo)+'">↩ Disponível</button></div></div></div>';
+  }).join("");
+  // ---- pedidos do carrinho ----
   const {data,error}=await db.from("pedidos").select("*").order("criado_em",{ascending:false});
-  if(error){$("vendasLista").innerHTML='<div class="err">Erro: '+esc(error.message)+'</div>';$("vendasKpis").innerHTML="";return;}
-  var arr=data||[];
-  // KPIs
+  if(error){$("vendasLista").innerHTML='<div class="err">Não consegui ler os pedidos: '+esc(error.message)+'<br>Você já rodou o SQL que cria a tabela "pedidos"?</div>';}
+  var arr=error?[]:(data||[]);
   var now=new Date(),mesIni=new Date(now.getFullYear(),now.getMonth(),1).getTime();
-  var totMes=0,qtdMes=0,totGeral=0;
-  arr.forEach(p=>{var t=Number(p.total)||0;totGeral+=t;if(new Date(p.criado_em).getTime()>=mesIni){totMes+=t;qtdMes++;}});
+  var totMes=0,qtdMes=0;
+  arr.forEach(p=>{var t=Number(p.total)||0;if(new Date(p.criado_em).getTime()>=mesIni){totMes+=t;qtdMes++;}});
   $("vendasKpis").innerHTML=''
-    +'<div class="kpi"><b>'+arr.length+'</b><span>pedidos no total</span></div>'
-    +'<div class="kpi"><b>'+qtdMes+'</b><span>pedidos este mês</span></div>'
-    +'<div class="kpi"><b>'+preco(totMes)+'</b><span>vendido este mês</span></div>'
-    +'<div class="kpi"><b>'+preco(totGeral)+'</b><span>total acumulado</span></div>';
+    +'<div class="kpi"><b>'+vend.length+'</b><span>peças vendidas</span></div>'
+    +'<div class="kpi"><b>'+preco(totVend)+'</b><span>valor em peças vendidas</span></div>'
+    +'<div class="kpi"><b>'+arr.length+'</b><span>pedidos pelo carrinho</span></div>'
+    +'<div class="kpi"><b>'+preco(totMes)+'</b><span>pedidos este mês</span></div>';
   $("vendasInfo").textContent="Cada pedido é registrado quando o cliente clica em finalizar no WhatsApp.";
-  $("vendasVazio").classList.toggle("hid",arr.length>0);
+  if(!error)$("vendasVazio").classList.toggle("hid",arr.length>0);
   var STV=[["novo","🆕 Novo"],["pago","💰 Pago"],["entregue","📦 Entregue"],["cancelado","✖ Cancelado"]];
   $("vendasLista").innerHTML=arr.map(p=>{
     var d=new Date(p.criado_em),dt=("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear()+" "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
@@ -418,6 +436,14 @@ async function carregarVendas(){
       +'<button class="mini danger" data-del="'+p.id+'">excluir</button></div></div>';
   }).join("");
 }
+$("vendidasLista").addEventListener("click",async e=>{
+  var b=e.target.closest("button[data-desmarca]");if(!b)return;
+  b.disabled=true;
+  const {error}=await db.from("pecas").update({status:"disponivel"}).eq("codigo",b.getAttribute("data-desmarca"));
+  if(error){alert("Erro: "+error.message);b.disabled=false;return;}
+  var p=PECAS.find(x=>x.codigo===b.getAttribute("data-desmarca"));if(p)p.status="disponivel";
+  carregarVendas();renderPecas();
+});
 $("vendasLista").addEventListener("change",async e=>{
   var s=e.target.closest("select.stPedido");if(!s)return;
   s.disabled=true;
