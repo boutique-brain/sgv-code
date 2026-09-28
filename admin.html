@@ -326,6 +326,11 @@ function abrirEditor(cod){
     +(isAch?'<label>Link de afiliado</label><input id="eLink" value="'+esc(p.link_afiliado)+'"><div class="row2"><div><label>Loja</label><input id="eLoja" value="'+esc(p.loja)+'"></div><div><label>Entrega</label><input id="eEnt" value="'+esc(p.entrega)+'"></div></div>':'')
     +'<div class="row2"><div><label>Situação</label><select id="eStatus">'+STATUS.map(s=>'<option value="'+s[0]+'"'+((p.status||"disponivel")===s[0]?" selected":"")+'>'+s[1]+'</option>').join("")+'</select></div>'
     +'<div><label>Visível na vitrine</label><select id="eVis"><option value="true"'+(p.disponivel!==false?" selected":"")+'>Sim</option><option value="false"'+(p.disponivel===false?" selected":"")+'>Não (esconder)</option></select></div></div>'
+    +'<label>Trocar fotos (opcional — deixe em branco pra manter)</label>'
+    +'<div class="fotos2">'
+    +'<div>'+(p.foto1?('<img src="'+esc(fotoURL(p.foto1,true))+'" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;margin-bottom:4px">'):'')+'<input type="file" id="eFoto1" accept="image/*"><div class="sub" style="margin-top:3px">'+(isLiv?"capa":"foto 1")+'</div></div>'
+    +'<div>'+(p.foto2?('<img src="'+esc(fotoURL(p.foto2,true))+'" style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:8px;margin-bottom:4px">'):'')+'<input type="file" id="eFoto2" accept="image/*"><div class="sub" style="margin-top:3px">'+(isLiv?"sinopse":"foto 2")+'</div></div>'
+    +'</div>'
     +'<div style="display:flex;gap:8px;margin-top:16px"><button id="eSalvar" style="flex:1">Salvar</button><button class="sec" id="eCancel">Cancelar</button><button class="danger mini" id="eDel">🗑 Excluir</button></div>'
     +'<div id="eMsg" class="msg"></div>';
   $("ov").classList.remove("hid");$("modal").classList.remove("hid");
@@ -337,10 +342,16 @@ function abrirEditor(cod){
       status:$("eStatus").value,disponivel:$("eVis").value==="true"};
     if(isLiv)row.sinopse=$("eSin").value.trim();
     if(isAch){row.link_afiliado=$("eLink").value.trim();row.loja=$("eLoja").value.trim();row.entrega=$("eEnt").value.trim();}
-    $("eMsg").textContent="Salvando...";$("eSalvar").disabled=true;
-    const {error}=await db.from("pecas").update(row).eq("codigo",p.codigo);
-    if(error){$("eMsg").innerHTML='<span class="err">Erro: '+esc(error.message)+'</span>';$("eSalvar").disabled=false;return;}
-    Object.assign(p,row);renderPecas();fecharModal();
+    $("eSalvar").disabled=true;
+    try{
+      var nf1=$("eFoto1").files[0],nf2=$("eFoto2").files[0];
+      if(nf1){$("eMsg").textContent="Enviando foto 1...";row.foto1=await subirFotoPath(p.codigo+"-1-"+Date.now(),await fileToDataURL(nf1));}
+      if(nf2){$("eMsg").textContent="Enviando foto 2...";row.foto2=await subirFotoPath(p.codigo+"-2-"+Date.now(),await fileToDataURL(nf2));}
+      $("eMsg").textContent="Salvando...";
+      const {error}=await db.from("pecas").update(row).eq("codigo",p.codigo);
+      if(error)throw new Error(error.message);
+      Object.assign(p,row);renderPecas();fecharModal();
+    }catch(err){$("eMsg").innerHTML='<span class="err">Erro: '+esc(err.message)+'</span>';$("eSalvar").disabled=false;}
   });
 }
 async function excluirPeca(cod){
@@ -357,14 +368,15 @@ async function nextCodigo(cat){
   var max=0;(data||[]).forEach(r=>{var m=/(\d+)\s*$/.exec(r.codigo||"");if(m)max=Math.max(max,parseInt(m[1],10));});
   return pre+String(max+1).padStart(6,"0");
 }
-async function subirFoto(codigo,n,dataUrl){
-  var path=codigo+"-"+n+".jpg";
+async function subirFotoPath(base,dataUrl){
+  var path=base+".jpg";
   const {error}=await db.storage.from(BUCKET).upload(path,dataURLtoBlob(dataUrl),{upsert:true,contentType:"image/jpeg"});
-  if(error)throw new Error("foto"+n+": "+error.message);
+  if(error)throw new Error(error.message);
   var tb=await makeThumb(dataUrl,520);if(!tb)tb=dataURLtoBlob(dataUrl);
-  await db.storage.from(BUCKET).upload(codigo+"-"+n+"-t.jpg",tb,{upsert:true,contentType:"image/jpeg"});
+  await db.storage.from(BUCKET).upload(base+"-t.jpg",tb,{upsert:true,contentType:"image/jpeg"});
   return path;
 }
+async function subirFoto(codigo,n,dataUrl){try{return await subirFotoPath(codigo+"-"+n,dataUrl);}catch(e){throw new Error("foto"+n+": "+e.message);}}
 $("btnAdd").addEventListener("click",async()=>{
   var cat=$("aCat").value,titulo=$("aTitulo").value.trim();
   if(!titulo){$("addMsg").innerHTML='<span class="err">Dê um título à peça.</span>';return;}
