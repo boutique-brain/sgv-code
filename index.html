@@ -174,8 +174,9 @@
       if(ref>val&&val>0)ph='<div class="cprice"><span class="pold">'+preco(ref)+'</span> '+preco(val)+' <span class="psave">-'+Math.round((1-val/ref)*100)+'%</span></div>';
       else ph='<div class="cprice">'+(val?preco(val):'a combinar')+'</div>';
       var qtxt=norm([d.titulo,d.descricao,d.codigo,d.tamanho,d.veste,d.loja,tagTxt,nameOf[d.categoria],d.sinopse].join(' '));
-      return '<div class="card" data-cat="'+(nameOf[d.categoria]?d.categoria:'__o')+'" data-sub="'+esc(d.subcategoria||'')+'" data-q="'+esc(qtxt)+'">'
-        +(d.status==='reservado'?'<span class="restag">RESERVADO</span>':'')
+      var sold=(d.status==='vendido'||d.selo==='vendido');
+      return '<div class="card'+(sold?' sold':'')+'" data-cat="'+(nameOf[d.categoria]?d.categoria:'__o')+'" data-sub="'+esc(d.subcategoria||'')+'" data-q="'+esc(qtxt)+'">'
+        +(sold?'<span class="soldtag">VENDIDO</span>':(d.status==='reservado'?'<span class="restag">RESERVADO</span>':''))
         +'<div class="cmedia"><div class="carousel">'+slides+'</div>'+navs+hint+'</div><div class="cbody">'
         +((tagTxt||reuso)?'<div class="ctaglin">'+(tagTxt?'<span class="ctag">'+esc(tagTxt)+'</span>':'')
             +(reuso?'<span class="reusotag" title="Peça de reuso" aria-label="Peça de reuso">♻️</span>':'')+'</div>':'')
@@ -188,7 +189,7 @@
         +ph+(ach
           ?'<a class="cbtn affbtn" href="'+esc(d.link_afiliado)+'" target="_blank" rel="noopener noreferrer sponsored nofollow" data-cod="'+esc(d.codigo)+'">🛍️ Ver '+(d.loja&&d.loja!=='Outra'?'na '+esc(d.loja):'oferta')+' ↗</a>'
             +'<div class="cafil">🔗 Link de afiliado · preço conferido em '+dataBR(d.atualizado_em)+', pode mudar na loja</div>'
-          :(d.categoria==='achadinhos'?'':'<button type="button" class="cbtn addbtn" data-cod="'+esc(d.codigo)+'" data-nome="'+esc(d.titulo)+'" data-preco="'+val+'" data-ref="'+ref+'" data-agua="'+e[0]+'" data-co2="'+e[1]+'">➕ Adicionar</button>'))
+          :(sold?'<div class="cbtn sold">✔ Vendido</div>':(d.categoria==='achadinhos'?'':'<button type="button" class="cbtn addbtn" data-cod="'+esc(d.codigo)+'" data-nome="'+esc(d.titulo)+'" data-preco="'+val+'" data-ref="'+ref+'" data-agua="'+e[0]+'" data-co2="'+e[1]+'">➕ Adicionar</button>')))
         +'</div></div>';}).join('');
     document.getElementById('catalogo').innerHTML='<style>'+dyn+'</style>'+radios+bar+subbar+'<div class="grid">'+cards+'</div>';
     if(itens.some(function(d){return d.categoria==='achadinhos';})){var ft=document.querySelector('.vftr');if(ft&&!ft.querySelector('.affnote')){var n=document.createElement('span');n.className='affnote';n.textContent='✨ Achadinhos são indicações de produtos de lojas parceiras: a compra é feita direto na loja, e podemos receber uma comissão pela indicação, sem custo extra para você.';ft.appendChild(n);}}
@@ -263,7 +264,7 @@
   // ---- painel "Acabou de chegar" (só em telas largas)
   function montarNovos(itens){
     var box=document.getElementById('vnovos');if(!box)return;
-    var lista=itens.filter(function(d){return d.foto1||d.foto2;}).slice(0,3);
+    var lista=itens.filter(function(d){return (d.foto1||d.foto2)&&d.status!=='vendido'&&d.selo!=='vendido';}).slice(0,3);
     if(!lista.length){box.remove();return;}
     box.innerHTML='<h2>✨ Acabou de chegar <small>toque para ver</small></h2><div class="vnlist">'+lista.map(function(d){
       var f=(d.categoria==='livros'?d.foto1:(d.foto2||d.foto1))||d.foto1;
@@ -320,7 +321,7 @@
   if(!URL_||/SEU-PROJETO/.test(URL_)){estado('⚙️ Configure o arquivo config.js com os dados do Supabase.');return;}
   Promise.all([
     api('config?select=slogan,complemento,contato,whatsapp&id=eq.1').then(function(r){return r[0];}).catch(function(){return null;}),
-    api('pecas?select=codigo,titulo,descricao,categoria,subcategoria,rotulo_tam,tamanho,veste,preco,preco_ref,sinopse,status,selo,foto1,foto2,link_afiliado,loja,entrega,disponivel,atualizado_em&status=neq.vendido&disponivel=is.true&order=criado_em.desc')
+    api('pecas?select=codigo,titulo,descricao,categoria,subcategoria,rotulo_tam,tamanho,veste,preco,preco_ref,sinopse,status,selo,foto1,foto2,link_afiliado,loja,entrega,disponivel,atualizado_em&disponivel=is.true&order=criado_em.desc')
   ]).then(function(r){render(r[0],r[1]);})
     .catch(function(err){console.error(err);estado('Não consegui abrir o baú agora 😕<br>Atualize a página em instantes.');});
 })();

@@ -24,6 +24,8 @@
   .bar>i{display:block;height:100%;background:var(--verde);width:0}
   .who{font-size:12px;color:var(--marrom2)}
   a{color:var(--destaque)}
+  .opt{font-size:13px;display:flex;align-items:center;gap:8px;margin-top:8px}
+  .opt input{width:auto}
 </style>
 </head>
 <body>
@@ -52,9 +54,10 @@
   <!-- IMPORTAÇÃO -->
   <div class="box hid" id="boxImport">
     <h1 style="font-size:17px">📦 Importar catálogo (migração)</h1>
-    <div class="sub">Selecione o arquivo <b>backup-final.json</b> que você já tem. Ele vai enviar as peças e as fotos pro banco. Pode rodar mais de uma vez sem duplicar (atualiza pelo código).</div>
+    <div class="sub">Selecione o arquivo <b>backup-final.json</b> que você já tem. Ele envia as peças e as fotos (com miniatura) pro banco. Pode rodar mais de uma vez sem duplicar (atualiza pelo código).</div>
     <label>Arquivo do backup (.json)</label>
     <input type="file" id="arquivo" accept="application/json,.json">
+    <label class="opt"><input type="checkbox" id="optThumb" checked> Gerar miniaturas das fotos (recomendado)</label>
     <button id="btnImport" disabled>Importar para o banco</button>
     <div class="bar"><i id="barfill"></i></div>
     <div id="log"></div>
@@ -65,12 +68,31 @@
 <script>
 const SB_URL = "https://ujcvjycnwfuuylfwdjuu.supabase.co";
 const SB_KEY = "sb_publishable_hy-_Bq4JePg5g_FrzGPM1g_biJBRiFn";
+const BUCKET = "fotos";
 const db = window.supabase.createClient(SB_URL, SB_KEY);
 
 const $ = id => document.getElementById(id);
 function log(msg, cls){ const d=$("log"); d.innerHTML += '<div class="'+(cls||'')+'">'+msg+'</div>'; d.scrollTop=d.scrollHeight; }
 function num(v){ if(v==null) return 0; v=(''+v).replace(/[^\d,.-]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.'); const n=parseFloat(v); return isNaN(n)?0:n; }
 function dataURLtoBlob(d){ const [h,b]=d.split(','); const mime=(h.match(/:(.*?);/)||[,'image/jpeg'])[1]; const bin=atob(b); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i); return new Blob([u],{type:mime}); }
+
+// gera uma miniatura (JPEG) a partir de um dataURL
+function makeThumb(dataUrl, maxW){
+  return new Promise(function(res){
+    try{
+      const img=new Image();
+      img.onload=function(){
+        const scale=Math.min(1, maxW/(img.width||maxW));
+        const w=Math.max(1,Math.round((img.width||maxW)*scale)), h=Math.max(1,Math.round((img.height||maxW)*scale));
+        const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        cv.toBlob(function(bl){ res(bl||null); }, 'image/jpeg', 0.72);
+      };
+      img.onerror=function(){ res(null); };
+      img.src=dataUrl;
+    }catch(e){ res(null); }
+  });
+}
 
 // ---- login ----
 $("btnLogin").addEventListener("click", async ()=>{
@@ -99,14 +121,29 @@ $("btnCount").addEventListener("click", contar);
 // ---- importação ----
 $("arquivo").addEventListener("change", ()=>{ $("btnImport").disabled = !$("arquivo").files.length; });
 
+async function subirFoto(codigo, n, dataUrl, fazerThumb){
+  const path = codigo+"-"+n+".jpg";
+  const { error:e } = await db.storage.from(BUCKET).upload(path, dataURLtoBlob(dataUrl), {upsert:true, contentType:"image/jpeg"});
+  if(e) throw new Error("foto"+n+": "+e.message);
+  if(fazerThumb){
+    let tb = await makeThumb(dataUrl, 520);
+    if(!tb) tb = dataURLtoBlob(dataUrl); // fallback: usa a foto cheia como miniatura
+    const tpath = codigo+"-"+n+"-t.jpg";
+    await db.storage.from(BUCKET).upload(tpath, tb, {upsert:true, contentType:"image/jpeg"});
+  }
+  return path;
+}
+
 $("btnImport").addEventListener("click", async ()=>{
   const f = $("arquivo").files[0]; if(!f) return;
+  const fazerThumb = $("optThumb").checked;
   $("btnImport").disabled=true; $("log").innerHTML="";
   log("Lendo arquivo...");
   let arr;
   try{ arr = JSON.parse(await f.text()); }catch(e){ log("Arquivo inválido: "+e.message,"err"); $("btnImport").disabled=false; return; }
   if(!Array.isArray(arr)){ log("O backup não é uma lista de peças.","err"); $("btnImport").disabled=false; return; }
   log("Peças no arquivo: "+arr.length,"ok");
+  const base = Date.now();
   let ok=0, fail=0;
   for(let i=0;i<arr.length;i++){
     const p=arr[i], c=p.campos||{};
@@ -114,37 +151,40 @@ $("btnImport").addEventListener("click", async ()=>{
     const nome=c["in-titulo"]||p.nome||"Peça";
     if(!codigo){ log("["+(i+1)+"] "+nome+" — SEM CÓDIGO, pulada","warn"); fail++; continue; }
     try{
-      // fotos -> storage
       let u1="", u2="";
       const fotos=p.fotos||{};
-      if(fotos["1"] && (""+fotos["1"]).startsWith("data:")){
-        const path=codigo+"-1.jpg";
-        const { error:e1 } = await db.storage.from("fotos").upload(path, dataURLtoBlob(fotos["1"]), {upsert:true, contentType:"image/jpeg"});
-        if(e1) throw new Error("foto1: "+e1.message);
-        u1 = db.storage.from("fotos").getPublicUrl(path).data.publicUrl;
-      }
-      if(fotos["2"] && (""+fotos["2"]).startsWith("data:")){
-        const path=codigo+"-2.jpg";
-        const { error:e2 } = await db.storage.from("fotos").upload(path, dataURLtoBlob(fotos["2"]), {upsert:true, contentType:"image/jpeg"});
-        if(e2) throw new Error("foto2: "+e2.message);
-        u2 = db.storage.from("fotos").getPublicUrl(path).data.publicUrl;
-      }
-      const row={
-        codigo, titulo:nome, descricao:c["in-desc"]||"", categoria:c["in-categoria"]||"",
-        subcat:c["in-subcat"]||"", rotulo:c["in-rotulo"]||"", tam:c["in-tam"]||"", veste:c["in-veste"]||"",
-        valor:num(c["in-valor"]), precoref:num(c["in-precoref"]), sinopse:c["in-sinopse"]||"",
-        cap1:c["in-cap1"]||"", cap2:c["in-cap2"]||"", selo:(p.selo||"disponivel")||"disponivel",
-        nfotos:p.nFotos||2, fmt:p.fmt||"4:5", foto1_url:u1, foto2_url:u2, ordem:i
+      if(fotos["1"] && (""+fotos["1"]).startsWith("data:")) u1 = await subirFoto(codigo,1,fotos["1"],fazerThumb);
+      if(fotos["2"] && (""+fotos["2"]).startsWith("data:")) u2 = await subirFoto(codigo,2,fotos["2"],fazerThumb);
+
+      const vendido = (p.selo||"") === "vendido";
+      const row = {
+        codigo,
+        titulo: nome,
+        descricao: c["in-desc"]||"",
+        categoria: c["in-categoria"]||"",
+        subcategoria: c["in-subcat"]||"",
+        rotulo_tam: c["in-rotulo"]||"",
+        tamanho: c["in-tam"]||"",
+        veste: c["in-veste"]||"",
+        preco: num(c["in-valor"]),
+        preco_ref: num(c["in-precoref"]),
+        sinopse: c["in-sinopse"]||"",
+        selo: p.selo||"",
+        status: vendido ? "vendido" : "disponivel",
+        disponivel: true,
+        foto1: u1,
+        foto2: u2,
+        criado_em: new Date(base - i*1000).toISOString()
       };
       const { error:ei } = await db.from("pecas").upsert(row,{onConflict:"codigo"});
       if(ei) throw new Error("banco: "+ei.message);
-      ok++; log("["+(i+1)+"/"+arr.length+"] ✓ "+codigo+" — "+nome,"ok");
+      ok++; log("["+(i+1)+"/"+arr.length+"] ✓ "+codigo+" — "+nome+(vendido?" (VENDIDO)":""),"ok");
     }catch(e){
       fail++; log("["+(i+1)+"/"+arr.length+"] ✗ "+codigo+" — "+e.message,"err");
     }
     $("barfill").style.width = Math.round((i+1)/arr.length*100)+"%";
   }
-  log("\nCONCLUÍDO: "+ok+" enviadas, "+fail+" com erro.","ok");
+  log("\nCONCLUÍDO: "+ok+" enviadas, "+fail+" com erro.", fail?"warn":"ok");
   contar();
   $("btnImport").disabled=false;
 });
