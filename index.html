@@ -258,6 +258,12 @@
       var mk=e.target.getAttribute&&e.target.getAttribute('data-k');if(!mk)return;
       if(e.target.classList.contains('crdel')){delete cart[mk];save();render();}
     });
+    waEl.addEventListener('click',function(){
+      try{var ks=keys();if(!ks.length)return;var tt=totals(),im=impacto();
+        var itens=ks.map(function(k){var it=cart[k];return {codigo:it.cod,titulo:it.nome,preco:it.preco};});
+        fetch(URL_+'/rest/v1/pedidos',{method:'POST',keepalive:true,headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({itens:itens,qtd:tt.q,total:tt.t,agua:im.ag,co2:im.co,economia:im.save,canal:'whatsapp'})}).catch(function(){});
+      }catch(e){}
+    });
     render();
   })();
   }
