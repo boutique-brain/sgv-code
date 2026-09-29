@@ -162,11 +162,16 @@
     var cards=itens.map(function(d){
       var e=ESG[d.categoria]||[1000,3];totAg+=e[0];totCo+=e[1];
       var livro=d.categoria==='livros';
-      var pa=livro?d.foto1:d.foto2,pb=livro?d.foto2:d.foto1;if(!pa){pa=pb;pb='';}
       var slides='',ns=0;
-      [pa,pb].forEach(function(p,i){if(p&&(i===0||p!==pa)){slides+='<div class="slide"><img src="'+esc(foto(p,true))+'" data-full="'+esc(foto(p,false))+'" alt="'+esc(d.titulo)+'" loading="lazy" decoding="async"></div>';ns++;}});
+      if(livro){
+        if(d.foto1){slides+='<div class="slide"><img src="'+esc(foto(d.foto1,true))+'" data-full="'+esc(foto(d.foto1,false))+'" alt="'+esc(d.titulo)+'" loading="lazy" decoding="async"></div>';ns++;}
+        if(d.sinopse){slides+='<div class="slide sinopse"><div class="sinh">📖 Sinopse</div><div class="sintxt">'+esc(d.sinopse)+'</div></div>';ns++;}
+      }else{
+        var pa=d.foto2,pb=d.foto1;if(!pa){pa=pb;pb='';}
+        [pa,pb].forEach(function(p,i){if(p&&(i===0||p!==pa)){slides+='<div class="slide"><img src="'+esc(foto(p,true))+'" data-full="'+esc(foto(p,false))+'" alt="'+esc(d.titulo)+'" loading="lazy" decoding="async"></div>';ns++;}});
+      }
       if(!slides)slides='<div class="slide noimg">sem foto</div>';
-      var hint=ns>1?'<span class="swipehint">↔ '+((livro&&d.sinopse)?'capa + sinopse':'2 fotos')+'</span>':'';
+      var hint=ns>1?'<span class="swipehint">↔ '+(livro?'capa + sinopse':'2 fotos')+'</span>':'';
       var navs=ns>1?'<button class="cnav prev" aria-label="foto anterior">‹</button><button class="cnav next" aria-label="próxima foto">›</button>':'';
       var tagTxt=d.categoria==='moda'?((d.subcategoria&&subName[d.subcategoria])?subEmo[d.subcategoria]+' '+subName[d.subcategoria]:'👗 Moda'):(nameOf[d.categoria]?emoOf[d.categoria]+' '+nameOf[d.categoria]:'');
       var ach=d.categoria==='achadinhos'&&/^https:\/\//i.test(d.link_afiliado||'');
