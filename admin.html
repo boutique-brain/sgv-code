@@ -54,7 +54,10 @@
   @keyframes sp{to{transform:rotate(360deg)}}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .ov{position:fixed;inset:0;background:rgba(30,20,12,.5);z-index:60}
-  .modal{position:fixed;z-index:70;top:50%;left:50%;transform:translate(-50%,-50%);width:560px;max-width:95vw;max-height:92vh;overflow:auto;background:var(--card);border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .modal{position:fixed;z-index:70;top:50%;left:50%;transform:translate(-50%,-50%);width:940px;max-width:96vw;max-height:92vh;overflow:auto;background:var(--card);border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+  .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-content:start}
+  .formgrid>details,.formgrid>.row2{grid-column:1/-1}
+  @media(max-width:560px){.formgrid{grid-template-columns:1fr}}
   .modal h2{font-size:17px;margin-bottom:4px}
   /* layout add: form + preview */
   .addgrid{display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start;margin-top:8px}
@@ -74,6 +77,8 @@
   .vprev .slide.sinopse .sinh{font-size:12px;font-weight:800;color:var(--destaque);letter-spacing:.5px;margin-bottom:7px}
   .vprev .slide.sinopse .sintxt{font-size:12px;line-height:1.5;color:var(--marrom);white-space:pre-wrap}
   .vprev .swipehint{position:absolute;bottom:8px;right:8px;background:rgba(74,53,38,.86);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:12px}
+  .vprev .cnav{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:32px;height:32px;border:1.5px solid rgba(120,90,50,.25);border-radius:50%;background:rgba(255,255,255,.95);color:#4a3526;font-size:20px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 8px rgba(40,25,10,.3)}
+  .vprev .cnav.prev{left:6px}.vprev .cnav.next{right:6px}
   .vprev .cbody{padding:10px 11px 12px;display:flex;flex-direction:column;gap:5px;flex:1}
   .vprev .ctaglin{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
   .vprev .ctag{align-self:flex-start;font-size:10.5px;font-weight:700;color:var(--destaque);background:#f6ecd9;padding:2px 9px;border-radius:10px}
@@ -155,7 +160,7 @@
         <div class="sub" style="margin-bottom:6px">Só aparecem os campos que realmente vão para a loja. O código é gerado automático.</div>
         <label>Categoria</label><select id="aCat"></select>
         <div class="addgrid">
-          <div id="aForm"></div>
+          <div id="aForm" class="formgrid"></div>
           <div><div class="prevwrap"><div class="prevlbl">👁️ Prévia na loja</div><div class="vprev" id="aPrev"></div></div></div>
         </div>
         <button id="btnAdd" style="margin-top:14px;width:100%">Salvar peça no banco</button>
@@ -239,7 +244,7 @@ function fieldHTML(px,f,cat,d){
 function formHTML(px,cat,d){
   d=d||{};
   var out=campos(cat).map(f=>fieldHTML(px,f,cat,d)).join("");
-  out+='<details class="fld"><summary class="sub" style="cursor:pointer">📦 Peso e dimensões (opcional — para o frete depois, não aparece na loja)</summary>'
+  out+='<details class="fld" open><summary class="sub" style="cursor:pointer">📦 Peso e dimensões (opcional — para o frete, não aparece na loja)</summary>'
      +'<div class="row2">'+fld(lab("Peso (kg)")+inp(px+"_peso",d.peso,"0.3"))+fld(lab("Largura (cm)")+inp(px+"_larg",d.largura,"20"))+'</div>'
      +'<div class="row2">'+fld(lab("Altura (cm)")+inp(px+"_alt",d.altura,"5"))+fld(lab("Comprimento (cm)")+inp(px+"_comp",d.comprimento,"30"))+'</div></details>';
   if(px==="e"){
@@ -262,6 +267,7 @@ function cardHTML(d){
   });
   if(!slides)slides='<div class="slide noimg">sem foto</div>';
   var hint=ns>1?'<span class="swipehint">↔ '+(livro?"capa + sinopse":"2 fotos")+'</span>':"";
+  var navs=ns>1?'<button class="cnav prev" type="button" aria-label="anterior">‹</button><button class="cnav next" type="button" aria-label="próxima">›</button>':"";
   var tagTxt=d.cat==="moda"?(d.sub?SUBEMO[d.sub]:"👗 Moda"):(CATEMO[d.cat]||"");
   var reuso=!ach;
   var val=num(d.preco),ref=num(d.ref);
@@ -277,7 +283,7 @@ function cardHTML(d){
     +ph
     +(ach?'<a class="cbtn affbtn">🛍️ Ver oferta ↗</a>':(sold?'<div class="cbtn sold">✔ Vendido</div>':'<button class="cbtn">➕ Adicionar</button>'));
   return '<div class="card'+(sold?" sold":"")+'">'+(sold?'<span class="soldtag">VENDIDO</span>':"")
-    +'<div class="cmedia"><div class="carousel">'+slides+'</div>'+hint+'</div><div class="cbody">'+body+'</div></div>';
+    +'<div class="cmedia"><div class="carousel">'+slides+'</div>'+navs+hint+'</div><div class="cbody">'+body+'</div></div>';
 }
 function getPrev(px,cat){
   function v(f){var el=$(px+"_"+f);return el?el.value:"";}
@@ -332,6 +338,11 @@ document.addEventListener("change",function(e){
   var t=e.target;if(t&&t.type==="file"){var m=(t.id||"").match(/^(a|e)_foto([12])$/);
     if(m){var px=m[1],n=+m[2],f=t.files[0];PREVFOTO[px][n]=f?URL.createObjectURL(f):PREVFOTO[px][n];atualizarPrev(px);}}
 });
+document.addEventListener("click",function(e){
+  var b=e.target.closest&&e.target.closest(".vprev .cnav");if(!b)return;
+  var car=b.parentElement.querySelector(".carousel");if(!car)return;
+  car.scrollBy({left:(b.classList.contains("next")?1:-1)*car.clientWidth,behavior:"smooth"});
+});
 
 /* ---- PEÇAS ---- */
 let PECAS=[];
@@ -384,7 +395,7 @@ function abrirEditor(cod){
   EDIT_CAT=p.categoria;EDIT_COD=p.codigo;
   PREVFOTO.e={1:p.foto1?fotoURL(p.foto1,true):null,2:p.foto2?fotoURL(p.foto2,true):null};
   $("modal").innerHTML='<h2>✎ Editar peça</h2><div class="sub" style="margin-bottom:10px">'+esc(p.codigo)+' · '+esc(CATNOME[p.categoria]||p.categoria)+'</div>'
-    +'<div class="addgrid"><div id="eForm">'+formHTML("e",p.categoria,p)+'</div>'
+    +'<div class="addgrid"><div id="eForm" class="formgrid">'+formHTML("e",p.categoria,p)+'</div>'
     +'<div><div class="prevwrap"><div class="prevlbl">👁️ Prévia na loja</div><div class="vprev" id="ePrev"></div></div></div></div>'
     +'<div style="display:flex;gap:8px;margin-top:16px"><button id="eSalvar" style="flex:1">Salvar</button><button class="sec" id="eCancel">Cancelar</button><button class="danger mini" id="eDel">🗑 Excluir</button></div>'
     +'<div id="eMsg" class="msg"></div>';
