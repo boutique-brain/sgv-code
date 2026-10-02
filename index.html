@@ -233,7 +233,7 @@
       var L=['Olá! Tenho interesse nestas peças ❤️',''];var i=1,t=0;
       ks.forEach(function(k){var it=cart[k];var sub=(it.preco||0);t+=sub;
         L.push(i+'. '+it.nome+(it.cod?(' ('+it.cod+')'):'')+(it.preco>0?(' — '+fmt(sub)):' — a combinar'));i++;});
-      L.push('');if(freteSel){L.push('🚚 Frete ('+((freteSel.empresa?freteSel.empresa+' ':'')+freteSel.nome)+'): '+(freteSel.preco>0?fmt(freteSel.preco):'grátis')+(freteSel.prazo?(' · '+freteSel.prazo+' dias uteis'):''));if(freteCep)L.push('📍 Entrega no CEP: '+freteCep);L.push('💰 Total com frete: '+fmt(t+(freteSel.preco||0)));}else{L.push('💰 Total das pecas: '+fmt(t));L.push('🚚 Frete: a combinar');}
+      L.push('');if(freteSel&&freteSel.combinar){L.push('🛵 Entrega: '+freteSel.nome+' (valor a combinar no WhatsApp)');if(freteCep)L.push('📍 CEP: '+freteCep);L.push('💰 Total das peças: '+fmt(t)+' + entrega a combinar');}else if(freteSel){L.push('🚚 Frete ('+((freteSel.empresa?freteSel.empresa+' ':'')+freteSel.nome)+'): '+(freteSel.preco>0?fmt(freteSel.preco):'grátis')+(freteSel.prazo?(' · '+freteSel.prazo+' dias uteis'):''));if(freteCep)L.push('📍 Entrega no CEP: '+freteCep);L.push('💰 Total com frete: '+fmt(t+(freteSel.preco||0)));}else{L.push('💰 Total das pecas: '+fmt(t));L.push('🚚 Frete: a combinar');}
       var im=impacto();L.push('');var _fr=[];if(im.ag>0)_fr.push('~'+miL(im.ag)+' L de água');if(im.pa>0)_fr.push('~'+miL(im.pa)+' folhas de papel');if(im.pl>0)_fr.push('~'+miL(im.pl)+' g de plástico');if(im.co>0)_fr.push('~'+miL(im.co)+' kg de CO₂');L.push('👏🏻 Parabéns pela sua atitude de reuso! Com esta compra você poupou do nosso 🌎: '+_fr.join(' e ')+' 💚🌱');
       if(im.save>0)L.push('💰 Você economizou '+fmt(im.save)+(im.pct>0?(', sendo esta compra '+im.pct+'% mais barata que peças novas 🏷️'):'')+'.');
       return 'https://wa.me/'+WA+'?text='+encodeURIComponent(L.join('\n'));}
@@ -248,8 +248,8 @@
         .then(function(r){return r.json();})
         .then(function(d){
           if(!d||d.error||!d.opcoes||!d.opcoes.length){msg.textContent=(d&&d.error)?('Ops: '+d.error):'Nenhuma opcao de frete para esse CEP. 😕';return;}
-          freteOpc=[{id:'retirada',empresa:'',nome:'Retirar pessoalmente / combinar',preco:0,prazo:null}].concat(d.opcoes.slice(0,3));freteCep=cep;freteSig=keys().slice().sort().join(',');msg.textContent='Escolha uma opcao de entrega:';
-          opts.innerHTML=freteOpc.map(function(o,i){return '<label class="cfopt" data-i="'+i+'"><input type="radio" name="frete"><span class="cfn">'+esc((o.empresa?o.empresa+' ':'')+o.nome)+'</span><span class="cfp">'+(o.preco>0?fmt(o.preco):'Grátis')+(o.prazo?('<span class="cfpz"> · '+o.prazo+'d</span>'):'')+'</span></label>';}).join('');
+          freteOpc=[{id:'retirada',empresa:'',nome:'Retirar pessoalmente',preco:0,prazo:null},{id:'motoboy',empresa:'',nome:'Entrega local por motoboy',preco:0,prazo:null,combinar:true}].concat(d.opcoes.slice(0,3));freteCep=cep;freteSig=keys().slice().sort().join(',');msg.textContent='Escolha uma opcao de entrega:';
+          opts.innerHTML=freteOpc.map(function(o,i){return '<label class="cfopt" data-i="'+i+'"><input type="radio" name="frete"><span class="cfn">'+esc((o.empresa?o.empresa+' ':'')+o.nome)+'</span><span class="cfp">'+(o.combinar?'a combinar':(o.preco>0?fmt(o.preco):'Grátis'))+(o.prazo?('<span class="cfpz"> · '+o.prazo+'d</span>'):'')+'</span></label>';}).join('');
         })
         .catch(function(){msg.textContent='Nao consegui calcular o frete agora. Tente de novo.';});
     }
