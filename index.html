@@ -116,7 +116,8 @@
   var CATS=[{k:'moda',n:'Moda',e:'👗'},{k:'uniforme',n:'Uniforme',e:'🎽'},{k:'sapatos',n:'Sapatos',e:'👟'},{k:'acessorios',n:'Acessórios',e:'👜'},{k:'brinquedo',n:'Brinquedos',e:'🧸'},{k:'livros',n:'Livros',e:'📚'},{k:'objetos',n:'Objetos & casa',e:'🏠'},{k:'achadinhos',n:'Achadinhos',e:'✨'}];
   var SUBS=[{k:'fem',n:'Feminino',e:'👗'},{k:'masc',n:'Masculino',e:'👔'},{k:'inf',n:'Infantil',e:'🧒'}];
   var ESG={moda:[2700,6],uniforme:[2700,6],sapatos:[8000,14],acessorios:[1000,2],brinquedo:[500,3],livros:[300,1],objetos:[700,3],achadinhos:[0,0]};
-  var DIMPAD={moda:[.4,20,6,30],uniforme:[.5,20,6,30],sapatos:[.9,20,12,32],acessorios:[.4,18,8,24],brinquedo:[.7,25,14,30],livros:[.5,16,4,23],objetos:[.8,25,14,30],_:[.5,20,8,30]};
+  var IMP={moda:{agua:2700,co2:6},uniforme:{agua:2700,co2:6},sapatos:{agua:8000,co2:14},acessorios:{agua:1000,co2:2},objetos:{agua:700,co2:3},livros:{papel:120,co2:1},brinquedo:{plastico:200,co2:3},achadinhos:{}};
+  var DIMPAD={moda:[.4,20,6,30],uniforme:[.5,20,6,30],sapatos:[.9,20,12,32],acessorios:[.4,18,8,24],brinquedo:[.7,25,14,30],livros:[.35,16,3,23],objetos:[.8,25,14,30],_:[.5,20,8,30]};
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   function preco(n){if(n==null||n==='')return '';n=Number(n);if(isNaN(n))return '';
     try{return 'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}catch(e){return 'R$ '+n.toFixed(2).replace('.',',');}}
@@ -197,7 +198,7 @@
         +ph+(ach
           ?'<a class="cbtn affbtn" href="'+esc(d.link_afiliado)+'" target="_blank" rel="noopener noreferrer sponsored nofollow" data-cod="'+esc(d.codigo)+'">🛍️ Ver '+(d.loja&&d.loja!=='Outra'?'na '+esc(d.loja):'oferta')+' ↗</a>'
             +'<div class="cafil">🔗 Link de afiliado · preço conferido em '+dataBR(d.atualizado_em)+', pode mudar na loja</div>'
-          :(sold?'<div class="cbtn sold">✔ Vendido</div>':(d.categoria==='achadinhos'?'':'<button type="button" class="cbtn addbtn" data-cod="'+esc(d.codigo)+'" data-nome="'+esc(d.titulo)+'" data-preco="'+val+'" data-ref="'+ref+'" data-agua="'+e[0]+'" data-co2="'+e[1]+'" data-peso="'+(Number(d.peso)>0?d.peso:(DIMPAD[d.categoria]||DIMPAD._)[0])+'" data-larg="'+(Number(d.largura)>0?d.largura:(DIMPAD[d.categoria]||DIMPAD._)[1])+'" data-alt="'+(Number(d.altura)>0?d.altura:(DIMPAD[d.categoria]||DIMPAD._)[2])+'" data-comp="'+(Number(d.comprimento)>0?d.comprimento:(DIMPAD[d.categoria]||DIMPAD._)[3])+'">➕ Adicionar</button>')))
+          :(sold?'<div class="cbtn sold">✔ Vendido</div>':(d.categoria==='achadinhos'?'':'<button type="button" class="cbtn addbtn" data-cod="'+esc(d.codigo)+'" data-nome="'+esc(d.titulo)+'" data-preco="'+val+'" data-ref="'+ref+'" data-agua="'+((IMP[d.categoria]||{}).agua||0)+'" data-co2="'+((IMP[d.categoria]||{}).co2||0)+'" data-papel="'+((IMP[d.categoria]||{}).papel||0)+'" data-plast="'+((IMP[d.categoria]||{}).plastico||0)+'" data-peso="'+(Number(d.peso)>0?d.peso:(DIMPAD[d.categoria]||DIMPAD._)[0])+'" data-larg="'+(Number(d.largura)>0?d.largura:(DIMPAD[d.categoria]||DIMPAD._)[1])+'" data-alt="'+(Number(d.altura)>0?d.altura:(DIMPAD[d.categoria]||DIMPAD._)[2])+'" data-comp="'+(Number(d.comprimento)>0?d.comprimento:(DIMPAD[d.categoria]||DIMPAD._)[3])+'">➕ Adicionar</button>')))
         +'</div></div>';}).join('');
     document.getElementById('catalogo').innerHTML='<style>'+dyn+'</style>'+radios+bar+subbar+'<div class="grid">'+cards+'</div>';
     if(itens.some(function(d){return d.categoria==='achadinhos';})){var ft=document.querySelector('.vftr');if(ft&&!ft.querySelector('.affnote')){var n=document.createElement('span');n.className='affnote';n.textContent='✨ Achadinhos são indicações de produtos de lojas parceiras: a compra é feita direto na loja, e podemos receber uma comissão pela indicação, sem custo extra para você.';ft.appendChild(n);}}
@@ -226,14 +227,14 @@
     function esc(s){var d=document.createElement('div');d.textContent=(s==null?'':s);return d.innerHTML;}
     function keys(){return Object.keys(cart);}
     function totals(){var q=0,t=0;keys().forEach(function(k){q+=1;t+=(cart[k].preco||0);});return {q:q,t:t};}
-    function impacto(){var ag=0,co=0,ref=0,val=0;keys().forEach(function(k){var it=cart[k];ag+=(it.agua||0);co+=(it.co2||0);if((it.ref||0)>(it.preco||0)){ref+=it.ref;val+=it.preco;}});
-      var pct=ref>0?Math.round((1-val/ref)*100):0;return {ag:ag,co:co,pct:pct,save:ref-val};}
+    function impacto(){var ag=0,co=0,pa=0,pl=0,ref=0,val=0;keys().forEach(function(k){var it=cart[k];ag+=(it.agua||0);co+=(it.co2||0);pa+=(it.papel||0);pl+=(it.plast||0);if((it.ref||0)>(it.preco||0)){ref+=it.ref;val+=it.preco;}});
+      var pct=ref>0?Math.round((1-val/ref)*100):0;return {ag:ag,co:co,pa:pa,pl:pl,pct:pct,save:ref-val};}
     function buildWA(){var ks=keys();if(!ks.length)return '#';
       var L=['Olá! Tenho interesse nestas peças ❤️',''];var i=1,t=0;
       ks.forEach(function(k){var it=cart[k];var sub=(it.preco||0);t+=sub;
         L.push(i+'. '+it.nome+(it.cod?(' ('+it.cod+')'):'')+(it.preco>0?(' — '+fmt(sub)):' — a combinar'));i++;});
-      L.push('');if(freteSel){L.push('🚚 Frete ('+((freteSel.empresa?freteSel.empresa+' ':'')+freteSel.nome)+'): '+fmt(freteSel.preco)+(freteSel.prazo?(' · '+freteSel.prazo+' dias uteis'):''));if(freteCep)L.push('📍 Entrega no CEP: '+freteCep);L.push('💰 Total com frete: '+fmt(t+(freteSel.preco||0)));}else{L.push('💰 Total das pecas: '+fmt(t));L.push('🚚 Frete: a combinar');}
-      var im=impacto();L.push('');L.push('👏🏻 Parabéns pela sua atitude de reuso! Com esta compra você poupou do nosso 🌎: ~'+miL(im.ag)+' L de água e ~'+miL(im.co)+' kg de CO₂ 💚🌱');
+      L.push('');if(freteSel){L.push('🚚 Frete ('+((freteSel.empresa?freteSel.empresa+' ':'')+freteSel.nome)+'): '+(freteSel.preco>0?fmt(freteSel.preco):'grátis')+(freteSel.prazo?(' · '+freteSel.prazo+' dias uteis'):''));if(freteCep)L.push('📍 Entrega no CEP: '+freteCep);L.push('💰 Total com frete: '+fmt(t+(freteSel.preco||0)));}else{L.push('💰 Total das pecas: '+fmt(t));L.push('🚚 Frete: a combinar');}
+      var im=impacto();L.push('');var _fr=[];if(im.ag>0)_fr.push('~'+miL(im.ag)+' L de água');if(im.pa>0)_fr.push('~'+miL(im.pa)+' folhas de papel');if(im.pl>0)_fr.push('~'+miL(im.pl)+' g de plástico');if(im.co>0)_fr.push('~'+miL(im.co)+' kg de CO₂');L.push('👏🏻 Parabéns pela sua atitude de reuso! Com esta compra você poupou do nosso 🌎: '+_fr.join(' e ')+' 💚🌱');
       if(im.save>0)L.push('💰 Você economizou '+fmt(im.save)+(im.pct>0?(', sendo esta compra '+im.pct+'% mais barata que peças novas 🏷️'):'')+'.');
       return 'https://wa.me/'+WA+'?text='+encodeURIComponent(L.join('\n'));}
     function calcularFrete(){
@@ -247,8 +248,8 @@
         .then(function(r){return r.json();})
         .then(function(d){
           if(!d||d.error||!d.opcoes||!d.opcoes.length){msg.textContent=(d&&d.error)?('Ops: '+d.error):'Nenhuma opcao de frete para esse CEP. 😕';return;}
-          freteOpc=d.opcoes;freteCep=cep;freteSig=keys().slice().sort().join(',');msg.textContent='Escolha uma opcao de entrega:';
-          opts.innerHTML=d.opcoes.map(function(o,i){return '<label class="cfopt" data-i="'+i+'"><input type="radio" name="frete"><span class="cfn">'+esc((o.empresa?o.empresa+' ':'')+o.nome)+'</span><span class="cfp">'+fmt(o.preco)+(o.prazo?('<span class="cfpz"> · '+o.prazo+'d</span>'):'')+'</span></label>';}).join('');
+          freteOpc=[{id:'retirada',empresa:'',nome:'Retirar pessoalmente / combinar',preco:0,prazo:null}].concat(d.opcoes.slice(0,3));freteCep=cep;freteSig=keys().slice().sort().join(',');msg.textContent='Escolha uma opcao de entrega:';
+          opts.innerHTML=freteOpc.map(function(o,i){return '<label class="cfopt" data-i="'+i+'"><input type="radio" name="frete"><span class="cfn">'+esc((o.empresa?o.empresa+' ':'')+o.nome)+'</span><span class="cfp">'+(o.preco>0?fmt(o.preco):'Grátis')+(o.prazo?('<span class="cfpz"> · '+o.prazo+'d</span>'):'')+'</span></label>';}).join('');
         })
         .catch(function(){msg.textContent='Nao consegui calcular o frete agora. Tente de novo.';});
     }
@@ -263,7 +264,7 @@
         ecoEl.hidden=false;
         ecoEl.innerHTML='<div class="ecoh">🎉 Parabéns pela escolha consciente!</div>'
           +'<div class="ecol">Ao reusar '+tt.q+(tt.q===1?' peça, você evita':' peças, você evita')+' o impacto de produzir '+(tt.q===1?'uma peça nova':'peças novas')+':</div>'
-          +'<div class="ecogr"><span>💧 ~'+miL(im.ag)+' L<small>de água</small></span><span>🌱 ~'+miL(im.co)+' kg<small>de CO₂</small></span></div>'
+          +'<div class="ecogr">'+(function(){var c='';if(im.ag>0)c+='<span>💧 ~'+miL(im.ag)+' L<small>de água</small></span>';if(im.pa>0)c+='<span>🌳 ~'+miL(im.pa)+'<small>folhas de papel</small></span>';if(im.pl>0)c+='<span>♻️ ~'+miL(im.pl)+' g<small>de plástico</small></span>';if(im.co>0)c+='<span>🌱 ~'+miL(im.co)+' kg<small>de CO₂</small></span>';return c;})()+'</div>'
           +(im.save>0?('<div class="ecos">Você economizou '+fmt(im.save)+(im.pct>0?(', sendo esta compra '+im.pct+'% mais barata que peças novas'):'')+' 💚</div>'):'');
       }else{ecoEl.hidden=true;}
       if(ks.length){badge.hidden=false;badge.textContent=tt.q;}
@@ -274,7 +275,7 @@
     document.addEventListener('click',function(e){
       var add=e.target.closest?e.target.closest('.addbtn'):null;
       if(add){var k=add.getAttribute('data-cod')||add.getAttribute('data-nome');
-        cart[k]={cod:add.getAttribute('data-cod'),nome:add.getAttribute('data-nome'),preco:parseFloat(add.getAttribute('data-preco'))||0,ref:parseFloat(add.getAttribute('data-ref'))||0,agua:parseFloat(add.getAttribute('data-agua'))||0,co2:parseFloat(add.getAttribute('data-co2'))||0,peso:parseFloat(add.getAttribute('data-peso'))||0.5,larg:parseFloat(add.getAttribute('data-larg'))||20,alt:parseFloat(add.getAttribute('data-alt'))||8,comp:parseFloat(add.getAttribute('data-comp'))||30,qty:1};
+        cart[k]={cod:add.getAttribute('data-cod'),nome:add.getAttribute('data-nome'),preco:parseFloat(add.getAttribute('data-preco'))||0,ref:parseFloat(add.getAttribute('data-ref'))||0,agua:parseFloat(add.getAttribute('data-agua'))||0,co2:parseFloat(add.getAttribute('data-co2'))||0,papel:parseFloat(add.getAttribute('data-papel'))||0,plast:parseFloat(add.getAttribute('data-plast'))||0,peso:parseFloat(add.getAttribute('data-peso'))||0.5,larg:parseFloat(add.getAttribute('data-larg'))||20,alt:parseFloat(add.getAttribute('data-alt'))||8,comp:parseFloat(add.getAttribute('data-comp'))||30,qty:1};
         save();render();
         add.textContent='✓ No carrinho';setTimeout(function(){add.textContent='➕ Adicionar';},1100);return;}
       if(e.target.closest&&e.target.closest('#carttop')){open();return;}
