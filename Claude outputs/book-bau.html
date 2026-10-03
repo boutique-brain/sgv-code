@@ -1,0 +1,428 @@
+<title>Book do Baú de Achadinhos</title>
+<style>
+  /* Layout: coluna editorial única (~900px) com cabeçalho fixo de navegação e
+     timeline vertical como peça central do cronograma. Paleta da marca (brechó:
+     creme, madeira, verde folha) com código em mono para SKU/etiqueta. */
+  :root{
+    --bg:#f3ece0; --surface:#ffffff; --surface-2:#faf4e9;
+    --ink:#38281b; --ink-soft:#6d5137; --line:#e4d6bd;
+    --verde:#4e6b2d; --verde-soft:#eef3e2;
+    --caramelo:#a8703c; --caramelo-soft:#f6ebd8;
+    --alerta:#9c3b2e;
+    --display:"Archivo","Segoe UI",system-ui,sans-serif;
+    --body:"Public Sans","Segoe UI",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",monospace;
+    --wrap:920px;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#211a13; --surface:#2c231a; --surface-2:#332920;
+    --ink:#f1e7d7; --ink-soft:#c3ac8f; --line:#453729;
+    --verde:#9cc06a; --verde-soft:#2a3320;
+    --caramelo:#d99b5d; --caramelo-soft:#38291a;
+    --alerta:#e38b7b; color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#211a13; --surface:#2c231a; --surface-2:#332920;
+    --ink:#f1e7d7; --ink-soft:#c3ac8f; --line:#453729;
+    --verde:#9cc06a; --verde-soft:#2a3320;
+    --caramelo:#d99b5d; --caramelo-soft:#38291a;
+    --alerta:#e38b7b; color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.6;
+    font-size:16px;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.12;margin:0}
+  p{margin:0}
+  a{color:var(--verde)}
+  .mono{font-family:var(--mono)}
+
+  /* nav */
+  .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
+    background:color-mix(in srgb,var(--bg) 88%,transparent);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .topbar .in{max-width:var(--wrap);margin:0 auto;padding:10px 16px;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{font-family:var(--display);font-weight:800;letter-spacing:-.01em;font-size:15px;
+    display:flex;align-items:center;gap:8px}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--caramelo)}
+  .nav{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+  .nav a{font-size:12.5px;font-weight:600;color:var(--ink-soft);text-decoration:none;
+    padding:5px 9px;border-radius:999px;white-space:nowrap}
+  .nav a:hover{background:var(--surface-2);color:var(--ink)}
+
+  .wrap{max-width:var(--wrap);margin:0 auto;padding-inline:16px;padding-block:0}
+  section{padding-block:34px;border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--caramelo);font-weight:600;margin-bottom:12px}
+  .lead{font-size:18px;color:var(--ink-soft);max-width:65ch}
+  h2{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+  h3{font-size:18px;font-weight:700;letter-spacing:-.01em}
+
+  /* hero */
+  .hero{padding-block:44px 30px}
+  .hero h1{font-size:clamp(32px,7vw,56px);font-weight:800;letter-spacing:-.03em;margin-bottom:14px}
+  .hero .kick{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--caramelo);font-weight:600;margin-bottom:18px}
+  .hero .sub{font-size:19px;color:var(--ink-soft);max-width:62ch}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+  .pill{font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;
+    background:var(--surface);border:1px solid var(--line);color:var(--ink-soft)}
+  .pill.go{background:var(--verde-soft);border-color:transparent;color:var(--verde)}
+
+  /* generic grid of cards */
+  .grid{display:grid;gap:14px;margin-top:20px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:720px){.g2,.g3{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:16px 17px;min-width:0}
+  .card h3{margin-bottom:6px}
+  .card p{font-size:14.5px;color:var(--ink-soft)}
+  .card .tag{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--caramelo);font-weight:600;display:block;margin-bottom:8px}
+
+  ul.clean{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:7px}
+  ul.clean li{position:relative;padding-left:20px;font-size:14.5px;color:var(--ink-soft)}
+  ul.clean li::before{content:"";position:absolute;left:3px;top:9px;width:7px;height:7px;
+    border-radius:2px;background:var(--verde)}
+  ul.clean li b{color:var(--ink);font-weight:600}
+
+  /* timeline */
+  .tl{margin-top:24px;display:flex;flex-direction:column;gap:0}
+  .phase{position:relative;padding:0 0 26px 54px}
+  .phase::before{content:"";position:absolute;left:19px;top:6px;bottom:-6px;width:2px;background:var(--line)}
+  .phase:last-child::before{display:none}
+  .phase .node{position:absolute;left:0;top:0;width:40px;height:40px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;
+    font-size:16px;background:var(--surface);border:2px solid var(--caramelo);color:var(--caramelo)}
+  .phase.now .node{background:var(--caramelo);color:#fff}
+  .phase .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:3px}
+  .phase .head h3{font-size:19px}
+  .phase .when{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--ink-soft);
+    background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
+  .phase .obj{font-size:15px;color:var(--ink-soft);margin:4px 0 2px;max-width:64ch}
+  .done{margin-top:10px;font-size:13.5px;color:var(--verde);font-weight:600}
+  .done span{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    display:block;color:var(--ink-soft);font-weight:600;margin-bottom:1px}
+
+  /* model / pricing */
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+  @media(max-width:720px){.tiers{grid-template-columns:1fr}}
+  .tier{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:8px}
+  .tier.feat{border-color:var(--caramelo);box-shadow:0 6px 24px color-mix(in srgb,var(--caramelo) 18%,transparent)}
+  .tier .name{font-family:var(--display);font-weight:800;font-size:17px}
+  .tier .price{font-family:var(--mono);font-size:13px;color:var(--caramelo);font-weight:600}
+  .tier ul{margin:4px 0 0}
+
+  .callout{background:var(--verde-soft);border:1px solid color-mix(in srgb,var(--verde) 30%,transparent);
+    border-radius:14px;padding:16px 18px;margin-top:20px}
+  .callout h3{color:var(--verde);margin-bottom:5px}
+  .callout p{font-size:14.5px;color:var(--ink-soft)}
+
+  .sku{display:inline-block;font-family:var(--mono);font-size:12.5px;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--ink)}
+
+  .q{display:flex;gap:12px;padding:13px 0;border-bottom:1px dashed var(--line);align-items:flex-start}
+  .q:last-child{border-bottom:none}
+  .q .n{font-family:var(--mono);font-weight:700;color:var(--caramelo);font-size:14px;flex:0 0 auto}
+  .q p{font-size:14.5px}
+  .q b{color:var(--ink)}
+
+  .foot{padding:30px 0 10px;color:var(--ink-soft);font-size:13px}
+  blockquote{margin:0;padding:12px 16px;border-left:3px solid var(--caramelo);background:var(--surface-2);
+    border-radius:0 10px 10px 0;font-size:14.5px;color:var(--ink-soft)}
+  blockquote b{color:var(--ink)}
+</style>
+
+<div class="topbar">
+  <div class="in">
+    <span class="brand"><span class="dot"></span>Baú de Achadinhos</span>
+    <nav class="nav">
+      <a href="#visao">Visão</a>
+      <a href="#temos">O que já temos</a>
+      <a href="#modelo">Modelo</a>
+      <a href="#cronograma">Cronograma</a>
+      <a href="#frentes">Frentes técnicas</a>
+      <a href="#marketing">Marketing</a>
+      <a href="#decisoes">Decisões</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kick">Book do projeto · rascunho vivo</div>
+    <h1>Do brechó em caos ao marketplace que vende em rede.</h1>
+    <p class="sub">O Baú de Achadinhos deixa de ser uma loja de um dono só e vira um aplicativo que organiza o brechó da dona — catálogo, estoque e localização das peças — ligado a um marketplace onde as peças de brechós diferentes se combinam em looks para o cliente. Modelo: assinatura acessível (SaaS) mais comissão sobre o que vende em rede.</p>
+    <div class="pills">
+      <span class="pill go">Vitrine no ar</span>
+      <span class="pill go">Backoffice funcionando</span>
+      <span class="pill">Multi-brechó: a construir</span>
+      <span class="pill">Looks: a construir</span>
+    </div>
+  </header>
+
+  <section id="visao">
+    <div class="eyebrow">A ideia central</div>
+    <h2>Três lados, um ecossistema</h2>
+    <p class="lead">Tudo é desenhado para que cada lado veja exatamente o que precisa — e nada além.</p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="tag">Cliente final</span>
+        <h3>Compra uma vitrine só</h3>
+        <p>Navega peças de vários brechós sem saber a origem, monta looks combinando peças de lojas diferentes e paga em um lugar só. Vestir-se inteira, de propósito.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Dona do brechó</span>
+        <h3>Organiza e vende em rede</h3>
+        <p>Fotografa a peça, vira catálogo lindo com SKU e etiqueta, sabe onde guardou e onde achar quando vende. E vende junto com outras — não sozinha.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Você (admin)</span>
+        <h3>Enxerga o todo</h3>
+        <p>Vê todos os brechós, o pedido completo de cada cliente, os repasses e os números do marketplace. O centro que faz a rede girar.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="temos">
+    <div class="eyebrow">Onde estamos hoje</div>
+    <h2>O que já está construído e no ar</h2>
+    <p class="lead">A base já existe e funciona — é a prova de tração pra filmar o vídeo e abrir o piloto.</p>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Loja + catálogo</h3>
+        <ul class="clean">
+          <li>Vitrine em <b>baudeachadinhos.com.br</b> com as 95 peças, categorias, busca e carrinho.</li>
+          <li>Nova categoria <b>Beleza</b> e <b>campo de cor</b> (até 2 cores) com busca por cor.</li>
+          <li>Peças vendidas ficam visíveis como prova social (selo VENDIDO).</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Backoffice de vendas</h3>
+        <ul class="clean">
+          <li>Cadastrar, editar, <b>clonar</b> peça e trocar fotos, com prévia idêntica à loja.</li>
+          <li>Marcar vendida/reservada e acompanhar o histórico de pedidos.</li>
+          <li>Formulário por categoria, só com o que reflete na vitrine.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Pagamento e entrega</h3>
+        <ul class="clean">
+          <li><b>PIX</b> com QR Code e reserva automática da peça.</li>
+          <li><b>Frete Melhor Envio</b> integrado (retira grátis, motoboy a combinar, mais baratas).</li>
+          <li>Pedido sinaliza pagamento e tem botão para avisar o cliente.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Cliente e dados</h3>
+        <ul class="clean">
+          <li>Cadastro com <b>CPF + CEP</b>, preenchimento automático de endereço (ViaCEP).</li>
+          <li>Qualquer entrega captura o contato, até a retirada no local.</li>
+          <li>Mensagem de WhatsApp com a economia e o impacto sustentável.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="modelo">
+    <div class="eyebrow">Como o Baú ganha dinheiro</div>
+    <h2>Assinatura acessível + comissão</h2>
+    <p class="lead">Preço baixo para entrar e encantar; a receita cresce com o uso e com as vendas em rede.</p>
+    <div class="tiers">
+      <div class="tier">
+        <div class="name">Básico</div>
+        <div class="price">grátis ou quase</div>
+        <p style="font-size:14px;color:var(--ink-soft)">A isca que atrai brechós.</p>
+        <ul class="clean">
+          <li>Catálogo virtual + estoque</li>
+          <li>SKU automático + QR</li>
+          <li>Entra no marketplace</li>
+        </ul>
+      </div>
+      <div class="tier feat">
+        <div class="name">PRO</div>
+        <div class="price">mensal acessível</div>
+        <p style="font-size:14px;color:var(--ink-soft)">Para quem quer profissionalizar.</p>
+        <ul class="clean">
+          <li>Localização física avançada</li>
+          <li>Etiqueta RFID (quando houver)</li>
+          <li>Relatórios e destaque na vitrine</li>
+        </ul>
+      </div>
+      <div class="tier">
+        <div class="name">Comissão</div>
+        <div class="price">% por venda em rede</div>
+        <p style="font-size:14px;color:var(--ink-soft)">Alinhada ao sucesso do brechó.</p>
+        <ul class="clean">
+          <li>Percentual sobre cada venda</li>
+          <li>Liga direto ao repasse</li>
+          <li>Você só ganha se ela ganha</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout">
+      <h3>São dois produtos num só</h3>
+      <p>O <b>app/SaaS</b> resolve a dor do caos (organização). O <b>marketplace</b> faz vender em rede (looks). Um atrai, o outro retém e fatura — e os dois se reforçam.</p>
+    </div>
+  </section>
+
+  <section id="cronograma">
+    <div class="eyebrow">Plano de ação</div>
+    <h2>Cronograma por fases</h2>
+    <p class="lead">Cada fase é testável e reversível. Começamos pela fundação, que não muda nada para o cliente atual, e seguimos até o piloto antes de escalar.</p>
+
+    <div class="tl">
+      <div class="phase now">
+        <div class="node">0</div>
+        <div class="head"><h3>Pré-piloto — a fundação</h3><span class="when">começa agora</span></div>
+        <p class="obj">Erguer a base multi-brechó e deixar um brechó piloto pronto, sem mexer na experiência de quem já compra.</p>
+        <ul class="clean">
+          <li><b>Dados:</b> tabela de fornecedores, "dono" em cada peça, as 95 peças viram do brechó "Baú (Amanda)".</li>
+          <li><b>Segurança (RLS):</b> cada brechó só vê o que é dele; você vê tudo — testado peça por peça.</li>
+          <li><b>Backoffice por papel</b> + aba Fornecedores (você cria o login de cada brechó).</li>
+          <li><b>SKU inteligente automático</b> no cadastro (ex.: <span class="sku">TH-VEST-FLOR-001</span>).</li>
+          <li>Reabrir a loja e recadastrar os achadinhos e as peças que faltaram.</li>
+        </ul>
+        <p class="done"><span>Pronto quando</span>um brechó piloto loga, cadastra e vê só as peças dele — e o cliente compra normal.</p>
+      </div>
+
+      <div class="phase">
+        <div class="node">1</div>
+        <div class="head"><h3>Piloto — 1 a 3 brechós reais</h3><span class="when">validação de ponta a ponta</span></div>
+        <p class="obj">Rodar uma venda de verdade, de uma peça de brechó parceiro, do começo ao fim.</p>
+        <ul class="clean">
+          <li><b>Pedidos multi-brechó:</b> o pedido é fatiado e cai o aviso para cada fornecedor.</li>
+          <li><b>Etiqueta imprimível</b> (QR + SKU + código de barras) — comprar a impressora térmica para testar na prática.</li>
+          <li><b>Localização física:</b> "onde guardei" e "onde achar" quando vende.</li>
+          <li><b>PIX com confirmação automática</b> (webhook de um PSP) — acaba o conferir manual.</li>
+          <li><b>Carteira / conta gráfica</b> de repasse por brechó (saldo, comissão, histórico) — versão simples.</li>
+        </ul>
+        <p class="done"><span>Pronto quando</span>o cliente paga, o PIX confirma sozinho, o brechó é avisado e o repasse fica registrado.</p>
+      </div>
+
+      <div class="phase">
+        <div class="node">2</div>
+        <div class="head"><h3>Looks + captação</h3><span class="when">liga o diferencial</span></div>
+        <p class="obj">Acender a mágica dos looks e começar a captar brechós de verdade.</p>
+        <ul class="clean">
+          <li><b>Monte seu look:</b> cliente combina peças de brechós diferentes num conjunto só.</li>
+          <li><b>Looks prontos</b> curados por você, com checagem de disponibilidade.</li>
+          <li><b>Landing de captação</b> + campanha de Instagram (lead "EU QUERO").</li>
+          <li><b>Vídeos de lançamento</b> (roteiros já prontos — ver seção Marketing).</li>
+        </ul>
+        <p class="done"><span>Pronto quando</span>há lista de espera de brechós crescendo e looks rodando na vitrine.</p>
+      </div>
+
+      <div class="phase">
+        <div class="node">3</div>
+        <div class="head"><h3>Escala e profissionalização</h3><span class="when">pós-piloto</span></div>
+        <p class="obj">Automatizar o dinheiro, abrir planos pagos e transformar o diferencial em barreira de entrada.</p>
+        <ul class="clean">
+          <li><b>Cartão de crédito + split automático</b>: o repasse cai direto no brechó, já descontada a comissão.</li>
+          <li><b>Planos pagos</b> com cobrança recorrente (Básico / PRO).</li>
+          <li><b>Frete melhor e mais barato</b> (ver frentes técnicas).</li>
+          <li><b>Kit organização</b> como receita: afiliados Shopee/Mercado Livre + insumos.</li>
+          <li><b>Baú PRO:</b> RFID, portais anti-furto e inventário automático.</li>
+        </ul>
+        <p class="done"><span>Pronto quando</span>o marketplace se sustenta sozinho e crescer é só ligar mais brechós.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="frentes">
+    <div class="eyebrow">Frentes técnicas detalhadas</div>
+    <h2>Os pontos que precisamos atacar</h2>
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">Pagamentos</span>
+        <h3>PIX automático + cartão + split</h3>
+        <p>Trocar o PIX estático por um provedor (Asaas, Mercado Pago ou Pagar.me) que confirma o pagamento por webhook e já faz o <b>split</b>: divide o valor automaticamente entre o brechó e a comissão do Baú. Isso resolve pagamento e repasse de uma vez, e abre o cartão de crédito.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Repasse</span>
+        <h3>Conta gráfica por brechó</h3>
+        <p>Uma carteira por brechó: cada venda credita o valor da peça, desconta a comissão e mostra o saldo a receber, com histórico e data de saque. Começa como um extrato simples e vira automática quando o split de pagamento entrar.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Frete</span>
+        <h3>Deixar mais barato</h3>
+        <p>Hoje está caro. Caminhos: tabela negociada no Melhor Envio por volume, mais transportadoras (PAC, Jadlog), <b>consolidar peças de vários brechós num envio só</b> quando a entrega for centralizada, frete grátis acima de um valor, e reforçar retira e motoboy local.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Organização física</span>
+        <h3>SKU → etiqueta QR → RFID</h3>
+        <p>Degrau barato primeiro: SKU automático, etiqueta imprimível com QR e código de barras, e campo de localização (<span class="sku">Arara D-12</span>). O celular acha a peça ao vender. RFID e portais ficam como PRO e como argumento de investidor — a arquitetura já nasce pronta pra eles.</p>
+      </div>
+    </div>
+    <div class="callout">
+      <h3>Kit organização como produto</h3>
+      <p>Araras, cabides, etiquetadora, saquinhos e a própria impressora podem virar receita via afiliados (Shopee/Mercado Livre, que te comissionam na compra) ou uma lojinha de insumos — aproveitando o módulo de achadinhos que já existe.</p>
+    </div>
+  </section>
+
+  <section id="marketing">
+    <div class="eyebrow">Lançamento</div>
+    <h2>Campanha e captura de lead</h2>
+    <p class="lead">A comunicação vende a transformação — do caos ao negócio — e já está quase toda escrita.</p>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Captura de lead (Instagram)</h3>
+        <ul class="clean">
+          <li>Landing simples de inscrição: nome, cidade, nome do brechó e WhatsApp → lista de espera.</li>
+          <li>CTA "comenta <b>EU QUERO</b>" com resposta automática (ManyChat) mandando o link.</li>
+          <li>Calendário de conteúdo: dor, solução, diferencial dos looks, bastidores.</li>
+          <li>Oferta de "primeiras brechós" com condição especial de entrada.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Vídeos de lançamento (prontos)</h3>
+        <ul class="clean">
+          <li>Narração curta de 30s — "do caos ao sucesso".</li>
+          <li><b>Roteiro de 90s</b> "essa era eu há 3 meses" — o mais forte, vende a transformação.</li>
+          <li>Versão com SKU + RFID para o vídeo longo.</li>
+          <li>3 legendas com CTA (a emocional converte mais).</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout">
+      <h3>Pitch de uma frase</h3>
+      <p>"O primeiro marketplace de brechós que une o virtual ao físico: a foto vira catálogo e SKU, a dona sabe onde guardar e onde achar em segundos, e as peças de brechós diferentes se combinam em looks — então todo mundo vende em rede."</p>
+    </div>
+    <blockquote style="margin-top:16px">Nota honesta: o depoimento em 1ª pessoa ("minhas vendas triplicaram") fica perfeito no ar se for de uma usuária real — nem que seja a primeira piloto — ou enquadrado como "veja como funciona". Mantém tudo verdadeiro e te protege.</blockquote>
+  </section>
+
+  <section id="decisoes">
+    <div class="eyebrow">Para destravar</div>
+    <h2>Decisões que dependem de você</h2>
+    <div>
+      <div class="q"><span class="n">1</span><p><b>Entrega:</b> o Baú centraliza o envio (brechós te entregam as peças) ou cada brechó envia direto? Muda o que o fornecedor vê de endereço e o cálculo do frete com várias lojas.</p></div>
+      <div class="q"><span class="n">2</span><p><b>Comissão:</b> qual a % do Baú por venda? É o que define o repasse.</p></div>
+      <div class="q"><span class="n">3</span><p><b>Privacidade:</b> o brechó vê os dados do cliente ou só "sua peça foi vendida/reservada", e você cuida do contato?</p></div>
+      <div class="q"><span class="n">4</span><p><b>Preço dos planos:</b> quanto é "super acessível" no Básico e no PRO? E a comissão do marketplace?</p></div>
+      <div class="q"><span class="n">5</span><p><b>Looks:</b> começamos pelo look montado pelo cliente (mais simples) ou pelos looks prontos curados por você?</p></div>
+      <div class="q"><span class="n">6</span><p><b>Frete multi-brechó</b> (se descentralizado): soma os fretes ou frete único do Baú?</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Backlog — "e por aí vai"</div>
+    <h2>Depois do piloto, quando fizer sentido</h2>
+    <div class="grid g3">
+      <div class="card"><p>App mobile dedicado para as donas de brechó</p></div>
+      <div class="card"><p>Programa de indicação entre brechós</p></div>
+      <div class="card"><p>Cupons, avaliações e selo de reputação</p></div>
+      <div class="card"><p>Dashboard de métricas do marketplace</p></div>
+      <div class="card"><p>Anti-furto e inventário por RFID (portais)</p></div>
+      <div class="card"><p>Curadoria por estilo e recomendação de looks</p></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>Book do Baú de Achadinhos — documento vivo, atualizado conforme avançamos. Próximo passo: Pré-piloto (Fase 0).</p>
+  </footer>
+
+</div>
