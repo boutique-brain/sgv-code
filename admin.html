@@ -562,17 +562,19 @@ function abrirFornEditor(id){
     +'<div class="row2"><div class="fld"><label>Nome</label><input id="ef_nome" value="'+attr(f.nome)+'"></div><div class="fld"><label>Apelido</label><input id="ef_apelido" value="'+attr(f.apelido)+'"></div></div>'
     +'<div class="row2"><div class="fld"><label>WhatsApp</label><input id="ef_tel" value="'+attr(f.telefone)+'"></div><div class="fld"><label>Comissão (%)</label><input id="ef_com" value="'+attr(f.comissao_pct)+'"></div></div>'
     +'<div class="fld"><label>Situação</label><select id="ef_ativo"><option value="true"'+(f.ativo?" selected":"")+'>Ativo</option><option value="false"'+(f.ativo?"":" selected")+'>Inativo</option></select></div>'
-    +'<div class="fld"><label>Login do brechó ('+(f.user_id?"✓ ligado":"sem login ainda")+')</label><div class="row2" style="gap:8px"><input id="ef_email" placeholder="email@exemplo.com"><button class="sec" type="button" id="ef_ligar">Ligar login</button></div><div class="sub" style="font-size:11.5px;margin-top:4px">Crie antes o usuário em Authentication &gt; Users (e-mail + senha) e informe o mesmo e-mail aqui.</div></div>'
+    +'<div class="fld"><label>Login do brechó ('+(f.user_id?"✓ já ligado":"sem login ainda")+')</label><input id="ef_cemail" placeholder="email do brechó"><div class="row2" style="gap:8px;margin-top:6px"><input id="ef_csenha" value="'+attr(genSenha())+'"><button type="button" id="ef_criar" style="flex:0 0 auto">Criar login</button></div><div class="sub" style="font-size:11.5px;margin-top:5px">Defina e-mail e senha, clique em Criar login e anote pra enviar ao brechó (ele troca depois). <a href="#" id="ef_ligarlink">já tem conta? ligar</a></div><div id="ef_ligarbox" class="row2" style="gap:8px;margin-top:6px" hidden><input id="ef_email" placeholder="email já cadastrado"><button class="sec" type="button" id="ef_ligar">Ligar</button></div></div>'
     +'<div style="display:flex;gap:8px;margin-top:14px"><button id="ef_salvar" style="flex:1">Salvar</button><button class="sec" id="ef_cancel">Cancelar</button></div><div id="ef_msg" class="msg"></div>';
   $("ov").classList.remove("hid");$("modal").classList.remove("hid");
   $("ef_cancel").addEventListener("click",fecharModal);
+  $("ef_criar").addEventListener("click",()=>criarLogin(id));
+  $("ef_ligarlink").addEventListener("click",function(ev){ev.preventDefault();var b=$("ef_ligarbox");b.hidden=!b.hidden;});
   $("ef_ligar").addEventListener("click",async()=>{
     var em=$("ef_email").value.trim();
-    if(!em){$("ef_msg").innerHTML='<span class="err">Informe o e-mail da conta do brechó.</span>';return;}
+    if(!em){$("ef_msg").innerHTML='<span class="err">Informe o e-mail da conta.</span>';return;}
     const {data,error}=await db.rpc("ligar_fornecedor",{p_forn:id,p_email:em});
     if(error){$("ef_msg").innerHTML='<span class="err">'+esc(error.message)+'</span>';return;}
-    if(data==="ligado"){$("ef_msg").innerHTML='<span class="ok">✓ Login ligado ao brechó.</span>';carregarFornecedores();}
-    else if(data==="email_sem_conta"){$("ef_msg").innerHTML='<span class="err">Não achei conta com esse e-mail. Crie o usuário em Authentication &gt; Users primeiro.</span>';}
+    if(data==="ligado"){$("ef_msg").innerHTML='<span class="ok">✓ Login ligado.</span>';carregarFornecedores();}
+    else if(data==="email_sem_conta"){$("ef_msg").innerHTML='<span class="err">Não achei conta com esse e-mail.</span>';}
     else{$("ef_msg").innerHTML='<span class="err">Sem permissão.</span>';}
   });
   $("ef_salvar").addEventListener("click",async()=>{
