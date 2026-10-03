@@ -184,11 +184,11 @@ const BUCKET="fotos";
 const db=window.supabase.createClient(SB_URL,SB_KEY);
 const $=id=>document.getElementById(id);
 
-const CATS=[["moda","Moda"],["uniforme","Uniforme"],["sapatos","Sapatos"],["acessorios","Acessórios"],["brinquedo","Brinquedos"],["livros","Livros"],["objetos","Objetos & casa"],["achadinhos","Achadinhos"]];
+const CATS=[["moda","Moda"],["uniforme","Uniforme"],["sapatos","Sapatos"],["acessorios","Acessórios"],["brinquedo","Brinquedos"],["livros","Livros"],["objetos","Objetos & casa"],["beleza","Beleza"],["achadinhos","Achadinhos"]];
 const CATNOME={};CATS.forEach(c=>CATNOME[c[0]]=c[1]);
-const CATEMO={moda:"👗 Moda",uniforme:"🎽 Uniforme",sapatos:"👟 Sapatos",acessorios:"👜 Acessórios",brinquedo:"🧸 Brinquedos",livros:"📚 Livros",objetos:"🏠 Objetos & casa",achadinhos:"✨ Achadinhos"};
+const CATEMO={moda:"👗 Moda",uniforme:"🎽 Uniforme",sapatos:"👟 Sapatos",acessorios:"👜 Acessórios",brinquedo:"🧸 Brinquedos",livros:"📚 Livros",objetos:"🏠 Objetos & casa",beleza:"💄 Beleza",achadinhos:"✨ Achadinhos"};
 const SUBEMO={fem:"👗 Feminino",masc:"👔 Masculino",inf:"🧒 Infantil"};
-const PREFIX={livros:"LVR",moda:"MOI",objetos:"OBC",brinquedo:"BQD",uniforme:"UNF",acessorios:"ACS",sapatos:"SAP",achadinhos:"ACH"};
+const PREFIX={livros:"LVR",moda:"MOI",objetos:"OBC",brinquedo:"BQD",uniforme:"UNF",acessorios:"ACS",sapatos:"SAP",beleza:"BLZ",achadinhos:"ACH"};
 const STATUS=[["disponivel","Disponível"],["reservado","Reservada"],["vendido","Vendida"]];
 
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
@@ -203,11 +203,13 @@ function makeThumb(dataUrl,maxW){return new Promise(res=>{try{const img=new Imag
 /* ---- regras por categoria ---- */
 function campos(cat){
   if(cat==="livros") return ["foto1","titulo","tam","sinopse","preco","ref"];
-  if(cat==="moda") return ["foto1","foto2","titulo","desc","sub","tam","veste","preco","ref"];
-  if(cat==="uniforme"||cat==="brinquedo") return ["foto1","foto2","titulo","desc","tam","veste","preco","ref"];
-  if(cat==="sapatos") return ["foto1","foto2","titulo","desc","tam","preco","ref"];
+  if(cat==="moda") return ["foto1","foto2","titulo","desc","sub","tam","veste","cor","preco","ref"];
+  if(cat==="uniforme") return ["foto1","foto2","titulo","desc","tam","veste","cor","preco","ref"];
+  if(cat==="brinquedo") return ["foto1","foto2","titulo","desc","tam","veste","preco","ref"];
+  if(cat==="sapatos") return ["foto1","foto2","titulo","desc","tam","cor","preco","ref"];
+  if(cat==="beleza") return ["foto1","foto2","titulo","desc","preco","ref"];
   if(cat==="achadinhos") return ["foto1","titulo","desc","link","loja","entrega","preco","ref"];
-  return ["foto1","foto2","titulo","desc","tam","preco","ref"];
+  return ["foto1","foto2","titulo","desc","tam","cor","preco","ref"];
 }
 function tamLabel(cat){return cat==="livros"?"Autor":cat==="sapatos"?"Número":"Tamanho";}
 function tamPh(cat){return cat==="livros"?"Ex.: Augusto Cury":cat==="sapatos"?"Ex.: 34":"Ex.: 06";}
@@ -234,6 +236,7 @@ function fieldHTML(px,f,cat,d){
     case "sub": return fld(lab("Subcategoria")+sel(px+"_sub",[["","—"],["fem","Feminino"],["masc","Masculino"],["inf","Infantil"]],d.subcategoria||""));
     case "tam": return fld(lab(tamLabel(cat))+inp(px+"_tam",d.tamanho,tamPh(cat)));
     case "veste": return fld(lab("Veste ~ (opcional)")+inp(px+"_veste",d.veste,"Ex.: 4 a 5 anos"));
+    case "cor": return fld(lab("Cor")+'<input id="'+px+'_cor" list="cores_dl" value="'+attr(d.cor)+'" placeholder="Ex.: Azul, Rosa, Estampado">');
     case "sinopse": return fld(lab("Sinopse (aparece como página ao lado da capa)")+txa(px+"_sinopse",d.sinopse,"Resumo do livro"));
     case "preco": return fld(lab("Preço de venda (R$)")+inp(px+"_preco",d.preco,"30,00"));
     case "ref": return fld(lab("Preço de referência / novo (R$, opcional)")+inp(px+"_ref",d.preco_ref,"60,00"));
@@ -259,7 +262,7 @@ function formHTML(px,cat,d){
 
 /* ---- PRÉVIA (card idêntico à vitrine) ---- */
 var PREVFOTO={a:{1:null,2:null},e:{1:null,2:null}};
-var EDIT_CAT="",EDIT_COD="";
+var EDIT_CAT="",EDIT_COD="";var ADD_PREFILL=null;
 function cardHTML(d){
   var livro=d.cat==="livros",ach=d.cat==="achadinhos",sold=d.status==="vendido";
   var slides="",ns=0;
@@ -281,6 +284,7 @@ function cardHTML(d){
     +'<div class="ccod">'+esc(d.codigo||"(código automático)")+'</div>'
     +(ach?('<div class="clinha">'+(d.loja?'<span class="cloja">🏬 '+esc(d.loja)+'</span>':"")+(d.entrega?'<span class="centrega">'+esc(d.entrega)+'</span>':"")+'</div>')
          :(d.tam?'<div class="cmeta">'+esc(d.rotulo||"Tam")+': '+esc(d.tam)+'</div>':""))
+    +(d.cor?'<div class="cmeta">🎨 '+esc(d.cor)+'</div>':"")
     +(d.veste?'<div class="cveste">👶 veste '+esc(d.veste)+'</div>':"")
     +ph
     +(ach?'<a class="cbtn affbtn">🛍️ Ver oferta ↗</a>':(sold?'<div class="cbtn sold">✔ Vendido</div>':'<button class="cbtn">➕ Adicionar</button>'));
@@ -289,7 +293,7 @@ function cardHTML(d){
 }
 function getPrev(px,cat){
   function v(f){var el=$(px+"_"+f);return el?el.value:"";}
-  var d={cat:cat,sub:v("sub"),titulo:v("titulo"),desc:v("desc"),tam:v("tam"),veste:v("veste"),
+  var d={cat:cat,sub:v("sub"),titulo:v("titulo"),desc:v("desc"),tam:v("tam"),veste:v("veste"),cor:v("cor"),
     preco:v("preco"),ref:v("ref"),sinopse:v("sinopse"),loja:v("loja"),entrega:v("entrega"),
     rotulo:rotuloDe(cat),status:(px==="e"&&$("e_status")?$("e_status").value:"disponivel"),codigo:(px==="e"?EDIT_COD:"")};
   var f1=PREVFOTO[px][1],f2=PREVFOTO[px][2];
@@ -373,7 +377,7 @@ function renderPecas(){
                    :'<button class="mini" style="background:var(--vermelho)" data-act="vend" data-cod="'+esc(p.codigo)+'">✔ Vendida</button>';
     return '<div class="pc'+(sold?" sold":"")+'"><span class="badge b-'+stt+'">'+(STATUS.find(s=>s[0]===stt)||["",stt])[1].toUpperCase()+'</span>'+img
       +'<div class="pcb"><div class="pctit">'+esc(p.titulo)+'</div><div class="pccod">'+esc(p.codigo)+' · '+esc(CATNOME[p.categoria]||p.categoria||"")+'</div>'
-      +'<div class="pcpreco">'+ph+'</div><div class="pcacts">'+toggle+'<button class="mini sec" data-act="edit" data-cod="'+esc(p.codigo)+'">✎ Editar</button></div></div></div>';
+      +'<div class="pcpreco">'+ph+'</div><div class="pcacts">'+toggle+'<button class="mini sec" data-act="edit" data-cod="'+esc(p.codigo)+'">✎ Editar</button><button class="mini sec" data-act="clone" data-cod="'+esc(p.codigo)+'">⧉ Clonar</button></div></div></div>';
   }).join("");
 }
 $("pecasLista").addEventListener("click",async e=>{
@@ -382,6 +386,7 @@ $("pecasLista").addEventListener("click",async e=>{
   if(act==="vend")return mudarStatus(cod,"vendido");
   if(act==="disp")return mudarStatus(cod,"disponivel");
   if(act==="edit")return abrirEditor(cod);
+  if(act==="clone")return clonarPeca(cod);
 });
 async function mudarStatus(cod,status){
   const {error}=await db.from("pecas").update({status:status}).eq("codigo",cod);
@@ -438,6 +443,7 @@ function coletar(px,cat){
     tamanho:v("tam"),rotulo_tam:rotuloDe(cat),
     veste:cs.indexOf("veste")>=0?v("veste"):"",
     sinopse:cat==="livros"?v("sinopse"):"",
+    cor:cs.indexOf("cor")>=0?v("cor"):"",
     preco:num(v("preco")),preco_ref:num(v("ref"))};
   if(cat==="achadinhos"){row.link_afiliado=v("link");row.loja=v("loja");row.entrega=v("entrega");}
   var pz=num(v("peso")),lg=num(v("larg")),al=num(v("alt")),cp=num(v("comp"));
@@ -447,12 +453,24 @@ function coletar(px,cat){
 
 /* ---- ADICIONAR ---- */
 function montarAdd(){
-  var cat=$("aCat").value;
-  $("aForm").innerHTML=formHTML("a",cat);
-  PREVFOTO.a={1:null,2:null};
+  var cat=$("aCat").value,d=ADD_PREFILL||{};
+  $("aForm").innerHTML=formHTML("a",cat,d);
+  PREVFOTO.a={1:(d.foto1?fotoURL(d.foto1,true):null),2:(d.foto2?fotoURL(d.foto2,true):null)};
   atualizarPrev("a");
 }
-$("aCat").addEventListener("change",montarAdd);
+$("aCat").addEventListener("change",function(){ADD_PREFILL=null;montarAdd();});
+function irParaAdd(){
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  var at=document.querySelector('.tab[data-tab="add"]');if(at)at.classList.add("on");
+  $("tab-pecas").classList.add("hid");$("tab-vendas").classList.add("hid");$("tab-add").classList.remove("hid");
+}
+function clonarPeca(cod){
+  var p=PECAS.find(x=>x.codigo===cod);if(!p)return;
+  ADD_PREFILL=Object.assign({},p);delete ADD_PREFILL.codigo;
+  irParaAdd();$("aCat").value=p.categoria;montarAdd();
+  $("addMsg").innerHTML='<span class="ok">Clonando de '+esc(p.codigo)+' - ajuste o que precisar (tamanho, fotos) e clique em Adicionar. As fotos do original s\u00e3o reaproveitadas se voc\u00ea n\u00e3o escolher novas.</span>';
+  try{$("tab-add").scrollIntoView({behavior:"smooth",block:"start"});}catch(e){}
+}
 async function nextCodigo(cat){
   var pre=PREFIX[cat]||"PEC";
   const {data}=await db.from("pecas").select("codigo").ilike("codigo",pre+"%");
@@ -475,7 +493,7 @@ $("btnAdd").addEventListener("click",async()=>{
   try{
     var codigo=await nextCodigo(cat);row.codigo=codigo;
     var f1=$("a_foto1")?$("a_foto1").files[0]:null,f2=$("a_foto2")?$("a_foto2").files[0]:null;
-    row.foto1="";row.foto2="";
+    row.foto1=(ADD_PREFILL&&ADD_PREFILL.foto1)||"";row.foto2=(ADD_PREFILL&&ADD_PREFILL.foto2)||"";
     if(f1){$("addMsg").textContent="Enviando foto ("+codigo+")...";$("addBar").style.width="40%";row.foto1=await subirFotoPath(codigo+"-1",await fileToDataURL(f1));}
     if(cat!=="livros"&&f2){$("addMsg").textContent="Enviando foto 2...";$("addBar").style.width="70%";row.foto2=await subirFotoPath(codigo+"-2",await fileToDataURL(f2));}
     row.criado_em=new Date().toISOString();
@@ -484,7 +502,7 @@ $("btnAdd").addEventListener("click",async()=>{
     if(error)throw new Error("banco: "+error.message);
     $("addBar").style.width="100%";
     $("addMsg").innerHTML='<span class="ok">✓ Peça '+esc(codigo)+' adicionada! Já está na vitrine.</span>';
-    montarAdd();carregarPecas();
+    ADD_PREFILL=null;montarAdd();carregarPecas();
     setTimeout(()=>{$("addBar").style.width="0"},1500);
   }catch(e){$("addMsg").innerHTML='<span class="err">✗ '+esc(e.message)+'</span>';}
   $("btnAdd").disabled=false;
@@ -573,5 +591,6 @@ $("vendasLista").addEventListener("click",async e=>{
   carregarVendas();carregarPecas();
 });
 </script>
+<datalist id="cores_dl"><option value="Branco"><option value="Preto"><option value="Cinza"><option value="Bege"><option value="Marrom"><option value="Azul"><option value="Azul-marinho"><option value="Azul-claro"><option value="Verde"><option value="Vermelho"><option value="Rosa"><option value="Pink"><option value="Amarelo"><option value="Laranja"><option value="Roxo/Lil\u00e1s"><option value="Vinho"><option value="Dourado"><option value="Prata"><option value="Nude"><option value="Estampado"><option value="Floral"><option value="Xadrez"><option value="Listrado"></datalist>
 </body>
 </html>
