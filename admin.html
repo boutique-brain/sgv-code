@@ -214,6 +214,7 @@ function campos(cat){
 function tamLabel(cat){return cat==="livros"?"Autor":cat==="sapatos"?"Número":"Tamanho";}
 function tamPh(cat){return cat==="livros"?"Ex.: Augusto Cury":cat==="sapatos"?"Ex.: 34":"Ex.: 06";}
 function rotuloDe(cat){return cat==="livros"?"Autor":cat==="sapatos"?"Nº":"Tam";}
+function combinaCor(a,b){a=(a||"").trim();b=(b||"").trim();return b?(a?a+" e "+b:b):a;}
 
 /* ---- helpers de formulário ---- */
 function lab(t){return '<label>'+t+'</label>';}
@@ -236,7 +237,7 @@ function fieldHTML(px,f,cat,d){
     case "sub": return fld(lab("Subcategoria")+sel(px+"_sub",[["","—"],["fem","Feminino"],["masc","Masculino"],["inf","Infantil"]],d.subcategoria||""));
     case "tam": return fld(lab(tamLabel(cat))+inp(px+"_tam",d.tamanho,tamPh(cat)));
     case "veste": return fld(lab("Veste ~ (opcional)")+inp(px+"_veste",d.veste,"Ex.: 4 a 5 anos"));
-    case "cor": return fld(lab("Cor")+'<input id="'+px+'_cor" list="cores_dl" value="'+attr(d.cor)+'" placeholder="Ex.: Azul, Rosa, Estampado">');
+    case "cor": {var cc=String(d.cor||"").split(/\s+e\s+/);return fld(lab("Cor (pode escolher 2)")+'<div class="row2" style="gap:8px"><input id="'+px+'_cor" list="cores_dl" value="'+attr(cc[0]||"")+'" placeholder="Ex.: Marrom"><input id="'+px+'_cor2" list="cores_dl" value="'+attr(cc[1]||"")+'" placeholder="2ª cor (opcional)"></div>');}
     case "sinopse": return fld(lab("Sinopse (aparece como página ao lado da capa)")+txa(px+"_sinopse",d.sinopse,"Resumo do livro"));
     case "preco": return fld(lab("Preço de venda (R$)")+inp(px+"_preco",d.preco,"30,00"));
     case "ref": return fld(lab("Preço de referência / novo (R$, opcional)")+inp(px+"_ref",d.preco_ref,"60,00"));
@@ -293,7 +294,7 @@ function cardHTML(d){
 }
 function getPrev(px,cat){
   function v(f){var el=$(px+"_"+f);return el?el.value:"";}
-  var d={cat:cat,sub:v("sub"),titulo:v("titulo"),desc:v("desc"),tam:v("tam"),veste:v("veste"),cor:v("cor"),
+  var d={cat:cat,sub:v("sub"),titulo:v("titulo"),desc:v("desc"),tam:v("tam"),veste:v("veste"),cor:combinaCor(v("cor"),v("cor2")),
     preco:v("preco"),ref:v("ref"),sinopse:v("sinopse"),loja:v("loja"),entrega:v("entrega"),
     rotulo:rotuloDe(cat),status:(px==="e"&&$("e_status")?$("e_status").value:"disponivel"),codigo:(px==="e"?EDIT_COD:"")};
   var f1=PREVFOTO[px][1],f2=PREVFOTO[px][2];
@@ -443,7 +444,7 @@ function coletar(px,cat){
     tamanho:v("tam"),rotulo_tam:rotuloDe(cat),
     veste:cs.indexOf("veste")>=0?v("veste"):"",
     sinopse:cat==="livros"?v("sinopse"):"",
-    cor:cs.indexOf("cor")>=0?v("cor"):"",
+    cor:cs.indexOf("cor")>=0?combinaCor(v("cor"),v("cor2")):"",
     preco:num(v("preco")),preco_ref:num(v("ref"))};
   if(cat==="achadinhos"){row.link_afiliado=v("link");row.loja=v("loja");row.entrega=v("entrega");}
   var pz=num(v("peso")),lg=num(v("larg")),al=num(v("alt")),cp=num(v("comp"));
@@ -591,6 +592,6 @@ $("vendasLista").addEventListener("click",async e=>{
   carregarVendas();carregarPecas();
 });
 </script>
-<datalist id="cores_dl"><option value="Rosa"><option value="Pink"><option value="Azul"><option value="Azul-marinho"><option value="Azul-claro"><option value="Branco"><option value="Preto"><option value="Cinza"><option value="Bege"><option value="Marrom"><option value="Vermelho"><option value="Verde"><option value="Amarelo"><option value="Laranja"><option value="Lilás"><option value="Roxo"><option value="Vinho"><option value="Nude"><option value="Dourado"><option value="Prata"><option value="Estampado"><option value="Floral"><option value="Xadrez"><option value="Listrado"></datalist>
+<datalist id="cores_dl"><option value="Rosa"><option value="Pink"><option value="Azul"><option value="Azul-marinho"><option value="Azul-claro"><option value="Verde"><option value="Vermelho"><option value="Amarelo"><option value="Mostarda"><option value="Ocre"><option value="Laranja"><option value="Lilás"><option value="Roxo"><option value="Vinho"><option value="Marrom"><option value="Bege"><option value="Nude"><option value="Off white"><option value="Branco"><option value="Preto"><option value="Cinza"><option value="Dourado"><option value="Prata"><option value="Estampado"><option value="Floral"><option value="Xadrez"><option value="Listrado"></datalist>
 </body>
 </html>
