@@ -194,7 +194,7 @@
         +'<div class="ccod">'+esc(d.codigo)+'</div>'
         +(ach?('<div class="clinha">'+lojaTag(d.loja)+entregaTag(d.entrega)+'</div>')
              :(d.tamanho?'<div class="cmeta">'+esc(d.rotulo_tam||'Nº')+': '+esc(d.tamanho)+'</div>':''))
-        +(d.cor?'<div class="cmeta">🎨 '+esc(d.cor)+'</div>':'')
+        +((d.cor&&['moda','uniforme','sapatos','acessorios','objetos'].indexOf(d.categoria)>=0)?'<div class="cmeta">🎨 '+esc(d.cor)+'</div>':'')
         +(d.veste?'<div class="cveste">👶 veste '+esc(d.veste)+'</div>':'')
 
         +ph+(ach
