@@ -544,6 +544,24 @@ async function carregarFornsSelect(){
   try{const {data}=await db.from("fornecedores").select("id,nome").eq("ativo",true).order("nome");FORNS=data||[];}catch(e){FORNS=[];}
   var sel=$("aForn");if(sel)sel.innerHTML=(FORNS.length?FORNS:[{id:MEU_FORN,nome:"Baú — Amanda"}]).map(f=>'<option value="'+f.id+'"'+(f.id===MEU_FORN?" selected":"")+'>'+esc(f.nome)+'</option>').join("");
 }
+function genSenha(){return "bau"+Math.floor(1000+Math.random()*9000);}
+async function criarLogin(forn_id){
+  var email=$("ef_cemail").value.trim(),senha=$("ef_csenha").value.trim();
+  if(!email||!senha){$("ef_msg").innerHTML='<span class="err">Preencha e-mail e senha.</span>';return;}
+  if(senha.length<6){$("ef_msg").innerHTML='<span class="err">A senha precisa de ao menos 6 caracteres.</span>';return;}
+  $("ef_msg").textContent="Criando login...";
+  try{
+    const {data:sess}=await db.auth.getSession();
+    const token=(sess&&sess.session)?sess.session.access_token:"";
+    const r=await fetch(SB_URL+"/functions/v1/criar-fornecedor-login",{method:"POST",
+      headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+token},
+      body:JSON.stringify({forn_id:forn_id,email:email,senha:senha})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.error){$("ef_msg").innerHTML='<span class="err">'+esc(j.error||("Erro "+r.status))+'</span>';return;}
+    $("ef_msg").innerHTML='<span class="ok">\u2713 Login criado e ligado! Envie ao brech\u00f3:<br>e-mail: '+esc(email)+'<br>senha: '+esc(senha)+'</span>';
+    carregarFornecedores();
+  }catch(e){$("ef_msg").innerHTML='<span class="err">'+esc(String(e.message||e))+'</span>';}
+}
 async function carregarFornecedores(){
   if(!SOU_ADMIN){$("fornLista").innerHTML='<div class="err">Só o admin gerencia fornecedores.</div>';$("fornCount").textContent="";return;}
   $("fornLista").innerHTML='<div class="spin"></div>';
