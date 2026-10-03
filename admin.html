@@ -48,7 +48,7 @@
   .pedido .ph{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
   .pedido .pdata{font-size:12px;color:#a08a6a;font-weight:700}.pedido .ptot{font-size:16px;font-weight:800;color:var(--verde2)}
   .pedido ul{margin:8px 0 8px 16px;font-size:13px;color:var(--marrom2)}
-  .pedido .pfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pedido select{width:auto;flex:0 0 auto;padding:7px 10px}
+  .pedido .pfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pedido select{width:auto;flex:0 0 auto;padding:7px 10px}.pbadge{display:inline-block;font-size:12px;font-weight:800;padding:3px 10px;border-radius:8px;margin:4px 0}.pgok{background:#e8f5ec;color:#1f6b33}.pgpend{background:#fdebd9;color:#b3480f}.pgnew{background:#f2e7d2;color:#6d5137}.pgx{background:#f3d9d4;color:#9e2b1f}.pcli{font-size:12.5px;color:var(--marrom);font-weight:700;margin-top:2px}.pobs{font-size:11.5px;color:#8a6f52;margin:6px 0;background:#f6ecd9;border-radius:8px;padding:6px 8px}
   .msg{font-size:13px;margin-top:8px}.ok{color:var(--verde2)}.err{color:var(--vermelho)}.warn{color:#b6852a}
   .bar{height:9px;background:#e7d8ba;border-radius:6px;overflow:hidden;margin-top:10px}.bar>i{display:block;height:100%;background:var(--verde);width:0}
   .empty{text-align:center;color:var(--marrom2);padding:40px 10px}
@@ -347,7 +347,7 @@ document.addEventListener("click",function(e){
 });
 
 /* ---- PEÇAS ---- */
-let PECAS=[];
+let PECAS=[];let PEDIDOS=[];
 async function carregarPecas(){
   $("pecasLista").innerHTML='<div class="spin"></div>';$("pecasVazio").classList.add("hid");
   const {data,error}=await db.from("pecas").select("*").order("criado_em",{ascending:false});
@@ -491,6 +491,7 @@ $("btnAdd").addEventListener("click",async()=>{
 });
 
 /* ---- VENDAS ---- */
+function pagBadge(p){var pix=/pix/i.test(p.obs||'');var st=p.status||'novo';if(st==='pago')return '<div class="pbadge pgok">💰 Pagamento confirmado</div>';if(st==='cancelado')return '<div class="pbadge pgx">✖ Cancelado</div>';if(st==='aguardando'||pix)return '<div class="pbadge pgpend">💠 PIX — aguardando conferência</div>';return '<div class="pbadge pgnew">🆕 Novo — pagamento a combinar</div>';}
 async function carregarVendas(){
   $("vendasLista").innerHTML='<div class="spin"></div>';$("vendasVazio").classList.add("hid");
   $("vendidasLista").innerHTML="";$("vendidasVazio").classList.add("hid");
@@ -507,7 +508,7 @@ async function carregarVendas(){
   }).join("");
   const {data,error}=await db.from("pedidos").select("*").order("criado_em",{ascending:false});
   if(error){$("vendasLista").innerHTML='<div class="err">Não consegui ler os pedidos: '+esc(error.message)+'<br>Você já rodou o SQL da tabela "pedidos"?</div>';}
-  var arr=error?[]:(data||[]);
+  var arr=error?[]:(data||[]);PEDIDOS=arr;
   var now=new Date(),mesIni=new Date(now.getFullYear(),now.getMonth(),1).getTime(),totMes=0,qtdMes=0;
   arr.forEach(p=>{var t=Number(p.total)||0;if(new Date(p.criado_em).getTime()>=mesIni){totMes+=t;qtdMes++;}});
   $("vendasKpis").innerHTML='<div class="kpi"><b>'+vend.length+'</b><span>peças vendidas</span></div>'
@@ -516,14 +517,18 @@ async function carregarVendas(){
     +'<div class="kpi"><b>'+preco(totMes)+'</b><span>pedidos este mês</span></div>';
   $("vendasInfo").textContent="Cada pedido é registrado quando o cliente clica em finalizar no WhatsApp.";
   if(!error)$("vendasVazio").classList.toggle("hid",arr.length>0);
-  var STV=[["novo","🆕 Novo"],["pago","💰 Pago"],["entregue","📦 Entregue"],["cancelado","✖ Cancelado"]];
+  var STV=[["novo","🆕 Novo"],["aguardando","💠 Aguardando PIX"],["pago","💰 Pago"],["entregue","📦 Entregue"],["cancelado","✖ Cancelado"]];
   $("vendasLista").innerHTML=arr.map(p=>{
     var d=new Date(p.criado_em),dt=("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+d.getFullYear()+" "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
     var itens=Array.isArray(p.itens)?p.itens:[];
     var li=itens.map(it=>'<li>'+esc(it.titulo||it.nome||"")+(it.codigo?(' <span style="color:#a08a6a">('+esc(it.codigo)+')</span>'):"")+(it.preco?(' — '+preco(it.preco)):"")+'</li>').join("");
     return '<div class="pedido"><div class="ph"><span class="pdata">#'+p.id+' · '+dt+'</span><span class="ptot">'+preco(p.total)+' · '+(p.qtd||itens.length)+' item(s)</span></div>'
+      +pagBadge(p)
+      +((p.cliente||p.telefone)?('<div class="pcli">'+esc(p.cliente||"")+(p.telefone?(' · '+esc(p.telefone)):"")+'</div>'):"")
       +'<ul>'+(li||'<li style="color:#a08a6a">sem itens</li>')+'</ul>'
+      +(p.obs?('<div class="pobs">'+esc(p.obs)+'</div>'):"")
       +'<div class="pfoot"><select data-id="'+p.id+'" class="stPedido">'+STV.map(s=>'<option value="'+s[0]+'"'+((p.status||"novo")===s[0]?" selected":"")+'>'+s[1]+'</option>').join("")+'</select>'
+      +(p.telefone?('<button class="mini" style="background:#25a35a" data-avisar="'+p.id+'">💬 Confirmar pagamento e avisar cliente</button>'):"")
       +'<button class="mini danger" data-del="'+p.id+'">excluir</button></div></div>';
   }).join("");
 }
@@ -535,6 +540,20 @@ $("vendidasLista").addEventListener("click",async e=>{
   var p=PECAS.find(x=>x.codigo===b.getAttribute("data-desmarca"));if(p)p.status="disponivel";
   carregarVendas();renderPecas();
 });
+$("vendasLista").addEventListener("click",async e=>{
+  var b=e.target.closest&&e.target.closest("button[data-avisar]");if(!b)return;
+  var id=b.getAttribute("data-avisar");var p=PEDIDOS.find(x=>String(x.id)===String(id));if(!p)return;
+  if(!confirm("Confirmar pagamento deste pedido? Isso marca as peças como VENDIDAS e abre o WhatsApp para avisar o cliente."))return;
+  b.disabled=true;
+  await db.from("pedidos").update({status:"pago"}).eq("id",id);
+  var cods=(Array.isArray(p.itens)?p.itens:[]).map(function(it){return it.codigo;}).filter(Boolean);
+  for(var i=0;i<cods.length;i++){await db.from("pecas").update({status:"vendido"}).eq("codigo",cods[i]);}
+  var tel=(p.telefone||"").replace(/\D/g,"");if(tel&&tel.length<=11)tel="55"+tel;
+  var nome=((p.cliente||"").trim().split(" ")[0])||"";
+  var msg="Olá"+(nome?(" "+nome):"")+"! Confirmamos o recebimento do seu pagamento. Seu pedido já está em processo de embalagem e logo segue para entrega. Obrigada por comprar no Baú de Achadinhos!";
+  if(tel)window.open("https://wa.me/"+tel+"?text="+encodeURIComponent(msg),"_blank");
+  carregarVendas();carregarPecas();
+});
 $("vendasLista").addEventListener("change",async e=>{
   var s=e.target.closest("select.stPedido");if(!s)return;s.disabled=true;
   const {error}=await db.from("pedidos").update({status:s.value}).eq("id",s.getAttribute("data-id"));
@@ -542,9 +561,16 @@ $("vendasLista").addEventListener("change",async e=>{
 });
 $("vendasLista").addEventListener("click",async e=>{
   var b=e.target.closest("button[data-del]");if(!b)return;
-  if(!confirm("Excluir este pedido do histórico?"))return;
-  const {error}=await db.from("pedidos").delete().eq("id",b.getAttribute("data-del"));
-  if(error){alert("Erro: "+error.message);return;}carregarVendas();
+  var id=b.getAttribute("data-del");var p=PEDIDOS.find(x=>String(x.id)===String(id));
+  var cods=(p&&Array.isArray(p.itens)?p.itens:[]).map(function(it){return it.codigo;}).filter(Boolean);
+  var reserv=cods.filter(function(c){var pe=PECAS.find(x=>x.codigo===c);return pe&&(pe.status==='reservado');});
+  var msg="Excluir este pedido do histórico?";
+  if(reserv.length)msg="Este pedido tem peça(s) RESERVADA(S). Ao excluir, a reserva será desfeita e a(s) peça(s) voltarão a ficar DISPONÍVEIS na vitrine.\n\nConfirma a exclusão?";
+  if(!confirm(msg))return;
+  for(var i=0;i<cods.length;i++){await db.from("pecas").update({status:"disponivel"}).eq("codigo",cods[i]).eq("status","reservado");}
+  const {error}=await db.from("pedidos").delete().eq("id",id);
+  if(error){alert("Erro: "+error.message);return;}
+  carregarVendas();carregarPecas();
 });
 </script>
 </body>
