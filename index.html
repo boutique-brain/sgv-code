@@ -230,13 +230,13 @@
     function impacto(){var ag=0,co=0,pa=0,pl=0,ref=0,val=0;keys().forEach(function(k){var it=cart[k];ag+=(it.agua||0);co+=(it.co2||0);pa+=(it.papel||0);pl+=(it.plast||0);if((it.ref||0)>(it.preco||0)){ref+=it.ref;val+=it.preco;}});
       var pct=ref>0?Math.round((1-val/ref)*100):0;return {ag:ag,co:co,pa:pa,pl:pl,pct:pct,save:ref-val};}
     function buildWA(){var ks=keys();if(!ks.length)return '#';
-      var L=['Olá! Tenho interesse nestas peças ❤️',''];var i=1,t=0;
+      var L=['Olá! Tenho interesse nestas peças:',''];var i=1,t=0;
       ks.forEach(function(k){var it=cart[k];var sub=(it.preco||0);t+=sub;
-        L.push(i+'. '+it.nome+(it.cod?(' ('+it.cod+')'):'')+(it.preco>0?(' — '+fmt(sub)):' — a combinar'));i++;});
-      L.push('');if(freteSel&&freteSel.combinar){L.push('🛵 Entrega: '+freteSel.nome+' (valor a combinar no WhatsApp)');if(freteCep)L.push('📍 CEP: '+freteCep);L.push('💰 Total das peças: '+fmt(t)+' + entrega a combinar');}else if(freteSel){L.push('🚚 Frete ('+((freteSel.empresa?freteSel.empresa+' ':'')+freteSel.nome)+'): '+(freteSel.preco>0?fmt(freteSel.preco):'grátis')+(freteSel.prazo?(' · '+freteSel.prazo+' dias uteis'):''));if(freteCep)L.push('📍 Entrega no CEP: '+freteCep);L.push('💰 Total com frete: '+fmt(t+(freteSel.preco||0)));}else{L.push('💰 Total das pecas: '+fmt(t));L.push('🚚 Frete: a combinar');}
-      var im=impacto();L.push('');var _fr=[];if(im.ag>0)_fr.push('~'+miL(im.ag)+' L de água');if(im.pa>0)_fr.push('~'+miL(im.pa)+' folhas de papel');if(im.pl>0)_fr.push('~'+miL(im.pl)+' g de plástico');if(im.co>0)_fr.push('~'+miL(im.co)+' kg de CO₂');L.push('👏🏻 Parabéns pela sua atitude de reuso! Com esta compra você poupou do nosso 🌎: '+_fr.join(' e ')+' 💚🌱');
-      if(im.save>0)L.push('💰 Você economizou '+fmt(im.save)+(im.pct>0?(', sendo esta compra '+im.pct+'% mais barata que peças novas 🏷️'):'')+'.');
-      if(enderecoNecessario()){var _de=dadosEntrega();L.push('');L.push('🧍 Cliente: '+_de.nome+(_de.cpf?(' · CPF '+_de.cpf):''));L.push('📱 Contato: '+_de.tel);L.push('🏠 Endereço: '+_de.rua+', '+_de.num+(_de.comp?(' - '+_de.comp):'')+' · '+_de.bairro+' · '+_de.cidade+'/'+_de.uf+' · CEP '+_de.cep);}
+        L.push(i+'. '+it.nome+(it.cod?(' ('+it.cod+')'):'')+(it.preco>0?(' - '+fmt(sub)):' - a combinar'));i++;});
+      L.push('');if(freteSel&&freteSel.combinar){L.push('Entrega: '+freteSel.nome+' (valor a combinar no WhatsApp)');if(freteCep)L.push('CEP: '+freteCep);L.push('Total das peças: '+fmt(t)+' + entrega a combinar');}else if(freteSel){L.push('Frete ('+((freteSel.empresa?freteSel.empresa+' ':'')+freteSel.nome)+'): '+(freteSel.preco>0?fmt(freteSel.preco):'grátis')+(freteSel.prazo?(' - '+freteSel.prazo+' dias uteis'):''));if(freteCep)L.push('Entrega no CEP: '+freteCep);L.push('Total com frete: '+fmt(t+(freteSel.preco||0)));}else{L.push('Total das peças: '+fmt(t));L.push('Frete: a combinar');}
+      var im=impacto();L.push('');var _fr=[];if(im.ag>0)_fr.push('~'+miL(im.ag)+' L de água');if(im.pa>0)_fr.push('~'+miL(im.pa)+' folhas de papel');if(im.pl>0)_fr.push('~'+miL(im.pl)+' g de plástico');if(im.co>0)_fr.push('~'+miL(im.co)+' kg de CO2');L.push('Parabéns pela sua atitude de reuso! Com esta compra você poupou do planeta: '+_fr.join(' e ')+'.');
+      if(im.save>0)L.push('Você economizou '+fmt(im.save)+(im.pct>0?(', sendo esta compra '+im.pct+'% mais barata que peças novas'):'')+'.');
+      if(enderecoNecessario()){var _de=dadosEntrega();L.push('');L.push('Cliente: '+_de.nome+(_de.cpf?(' - CPF '+_de.cpf):''));L.push('Contato: '+_de.tel);L.push('Endereço: '+_de.rua+', '+_de.num+(_de.comp?(' - '+_de.comp):'')+' - '+_de.bairro+' - '+_de.cidade+'/'+_de.uf+' - CEP '+_de.cep);}
       return 'https://wa.me/'+WA+'?text='+encodeURIComponent(L.join('\n'));}
     function calcularFrete(){
       var cepEl=document.getElementById('cfcep'),msg=document.getElementById('cfmsg'),opts=document.getElementById('cfopts');
