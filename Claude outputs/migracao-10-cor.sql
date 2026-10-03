@@ -38,7 +38,8 @@ from (
 ) sub
 where p.codigo = sub.codigo
   and coalesce(p.cor,'') = ''
-  and sub.cor_detect is not null;
+  and sub.cor_detect is not null
+  and p.categoria in ('moda','uniforme','sapatos','acessorios','objetos');
 
 notify pgrst, 'reload schema';
 
