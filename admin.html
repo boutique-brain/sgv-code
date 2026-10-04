@@ -136,6 +136,7 @@
         <div><label>Situação</label><select id="fStatus">
           <option value="">Todas</option><option value="disponivel">Disponíveis</option>
           <option value="reservado">Reservadas</option><option value="vendido">Vendidas</option></select></div>
+        <div class="admin-only hid" id="fFornWrap"><label>Fornecedor</label><select id="fForn"></select></div>
         <div style="flex:0 0 auto"><label>&nbsp;</label><button class="sec mini" id="btnReload">🔄 Atualizar</button></div>
       </div>
       <div class="sub" id="pecasCount" style="margin-bottom:8px"></div>
@@ -283,7 +284,7 @@ function formHTML(px,cat,d){
 
 /* ---- PRÉVIA (card idêntico à vitrine) ---- */
 var PREVFOTO={a:{1:null,2:null},e:{1:null,2:null}};
-var EDIT_CAT="",EDIT_COD="";var ADD_PREFILL=null;var MEU_FORN=null,SOU_ADMIN=false,FORNS=[];
+var EDIT_CAT="",EDIT_COD="";var ADD_PREFILL=null;var MEU_FORN=null,SOU_ADMIN=false,FORNS=[],FORNNOME={};
 function cardHTML(d){
   var livro=d.cat==="livros",ach=d.cat==="achadinhos",sold=d.status==="vendido";
   var slides="",ns=0;
@@ -390,11 +391,11 @@ async function carregarPecas(){
   PECAS=data||[];renderPecas();
 }
 $("btnReload").addEventListener("click",carregarPecas);
-["fBusca","fCat","fStatus"].forEach(id=>$(id).addEventListener("input",renderPecas));
+["fBusca","fCat","fStatus","fForn"].forEach(id=>{var el=$(id);if(el)el.addEventListener("input",renderPecas);});
 function normal(t){return String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");}
 function renderPecas(){
-  var q=normal($("fBusca").value),cat=$("fCat").value,st=$("fStatus").value;
-  var arr=PECAS.filter(p=>{if(cat&&p.categoria!==cat)return false;if(st&&(p.status||"disponivel")!==st)return false;
+  var q=normal($("fBusca").value),cat=$("fCat").value,st=$("fStatus").value,fv=($("fForn")?$("fForn").value:"");
+  var arr=PECAS.filter(p=>{if(fv&&p.fornecedor_id!==fv)return false;if(cat&&p.categoria!==cat)return false;if(st&&(p.status||"disponivel")!==st)return false;
     if(q){if(normal([p.titulo,p.codigo,p.descricao,p.tamanho].join(" ")).indexOf(q)<0)return false;}return true;});
   $("pecasCount").textContent=arr.length+" de "+PECAS.length+" peças";
   $("pecasVazio").classList.toggle("hid",arr.length>0);
@@ -407,7 +408,7 @@ function renderPecas(){
     var toggle=sold?'<button class="mini sec" data-act="disp" data-cod="'+esc(p.codigo)+'">↩ Disponível</button>'
                    :'<button class="mini" style="background:var(--vermelho)" data-act="vend" data-cod="'+esc(p.codigo)+'">✔ Vendida</button>';
     return '<div class="pc'+(sold?" sold":"")+'"><span class="badge b-'+stt+'">'+(STATUS.find(s=>s[0]===stt)||["",stt])[1].toUpperCase()+'</span>'+img
-      +'<div class="pcb"><div class="pctit">'+esc(p.titulo)+'</div><div class="pccod">'+esc(p.codigo)+' · '+esc(CATNOME[p.categoria]||p.categoria||"")+'</div><div class="pccod" style="opacity:.7">'+esc(skuDe(p))+'</div>'
+      +'<div class="pcb"><div class="pctit">'+esc(p.titulo)+'</div><div class="pccod">'+esc(p.codigo)+' · '+esc(CATNOME[p.categoria]||p.categoria||"")+'</div><div class="pccod" style="opacity:.7">'+esc(skuDe(p))+'</div>'+(SOU_ADMIN?'<div class="pccod" style="color:#8a6f52">🏪 '+esc(FORNNOME[p.fornecedor_id]||"—")+'</div>':"")
       +'<div class="pcpreco">'+ph+'</div><div class="pcacts">'+toggle+'<button class="mini sec" data-act="edit" data-cod="'+esc(p.codigo)+'">✎ Editar</button><button class="mini sec" data-act="clone" data-cod="'+esc(p.codigo)+'">⧉ Clonar</button></div></div></div>';
   }).join("");
 }
@@ -542,8 +543,10 @@ $("btnAdd").addEventListener("click",async()=>{
 
 /* ---- FORNECEDORES (admin) ---- */
 async function carregarFornsSelect(){
-  try{const {data}=await db.from("fornecedores").select("id,nome").eq("ativo",true).order("nome");FORNS=data||[];}catch(e){FORNS=[];}
+  try{const {data}=await db.from("fornecedores").select("id,nome").order("nome");FORNS=data||[];}catch(e){FORNS=[];}
+  FORNNOME={};FORNS.forEach(f=>{FORNNOME[f.id]=f.nome;});
   var sel=$("aForn");if(sel)sel.innerHTML=(FORNS.length?FORNS:[{id:MEU_FORN,nome:"Baú — Amanda"}]).map(f=>'<option value="'+f.id+'"'+(f.id===MEU_FORN?" selected":"")+'>'+esc(f.nome)+'</option>').join("");
+  var ff=$("fForn");if(ff){var cur=ff.value;ff.innerHTML='<option value="">Todos os fornecedores</option>'+FORNS.map(f=>'<option value="'+f.id+'">'+esc(f.nome)+'</option>').join("");ff.value=cur;}
 }
 function genSenha(){return "bau"+Math.floor(1000+Math.random()*9000);}
 async function criarLogin(forn_id){
