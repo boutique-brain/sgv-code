@@ -208,6 +208,7 @@ const PREFIX={livros:"LVR",moda:"MOI",objetos:"OBC",brinquedo:"BQD",uniforme:"UN
 const CAT3={moda:"MOD",uniforme:"UNI",sapatos:"SAP",acessorios:"ACE",objetos:"OBJ",brinquedo:"BRQ",livros:"LIV",beleza:"BEL",achadinhos:"ACH"};
 function semAcento(x){return String(x==null?"":x).normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
 function skuDe(p){var cat=CAT3[p.categoria]||"PEC";var cor=p.cor?semAcento(p.cor).toUpperCase().replace(/[^A-Z]/g,"").slice(0,4):"";var m=/(\d+)\s*$/.exec(p.codigo||"");var seq=(m?m[1]:"0").slice(-3).padStart(3,"0");return "TH-"+cat+(cor?"-"+cor:"")+"-"+seq;}
+document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".btnmerc");if(!b)return;e.preventDefault();var px=b.getAttribute("data-px");var el=$(px+"_titulo");var t=(el&&el.value||"").trim();if(!t){alert("Preencha o título da peça primeiro.");return;}var q=encodeURIComponent(t);window.open("https://lista.mercadolivre.com.br/"+q,"_blank");window.open("https://www.google.com/search?tbm=shop&q="+q,"_blank");});
 const STATUS=[["disponivel","Disponível"],["reservado","Reservada"],["vendido","Vendida"]];
 
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
@@ -259,7 +260,7 @@ function fieldHTML(px,f,cat,d){
     case "cor": {var cc=String(d.cor||"").split(/\s+e\s+/);return fld(lab("Cor (pode escolher 2)")+'<div class="row2" style="gap:8px"><input id="'+px+'_cor" list="cores_dl" value="'+attr(cc[0]||"")+'" placeholder="Ex.: Marrom"><input id="'+px+'_cor2" list="cores_dl" value="'+attr(cc[1]||"")+'" placeholder="2ª cor (opcional)"></div>');}
     case "sinopse": return fld(lab("Sinopse (aparece como página ao lado da capa)")+txa(px+"_sinopse",d.sinopse,"Resumo do livro"));
     case "preco": return fld(lab("Preço de venda (R$)")+inp(px+"_preco",d.preco,"30,00"));
-    case "ref": return fld(lab("Preço de referência / novo (R$, opcional)")+inp(px+"_ref",d.preco_ref,"60,00"));
+    case "ref": return fld(lab("Preço de referência / novo (R$, opcional)")+inp(px+"_ref",d.preco_ref,"60,00")+'<button type="button" class="sec mini btnmerc" data-px="'+px+'" style="margin-top:6px">🔎 Ver preço novo no mercado</button>');
     case "link": return fld(lab("Link de afiliado")+inp(px+"_link",d.link_afiliado,"https://..."));
     case "loja": return fld(lab("Loja")+inp(px+"_loja",d.loja,"Ex.: Shopee, Mercado Livre"));
     case "entrega": return fld(lab("Entrega")+inp(px+"_entrega",d.entrega,"full / gratis / full-gratis"));
