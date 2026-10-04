@@ -246,8 +246,36 @@ function fld(x){return '<div class="fld">'+x+'</div>';}
 function fotoField(px,n,cat,cur){
   var l=n===1?(cat==="livros"?"Capa (foto)":"Foto 1 (peça)"):"Foto 2 (no corpo / detalhe)";
   var img=cur?('<img class="curfoto" src="'+fotoURL(cur,true)+'">'):"";
-  return fld(lab(l)+img+'<input type="file" id="'+px+'_foto'+n+'" accept="image/*">');
+  return fld(lab(l)+img+'<input type="file" id="'+px+'_foto'+n+'" accept="image/*" capture="environment">'
+    +'<button type="button" class="sec mini btnia" data-px="'+px+'" data-n="'+n+'" style="margin-top:6px">✨ Tratar no estilo do catálogo (IA)</button>'
+    +'<div class="iamsg" id="'+px+'_iamsg'+n+'" style="font-size:11.5px;color:#6d5137;margin-top:4px"></div>');
 }
+async function tratarFotoIA(dataUrl,cat){
+  const {data:sess}=await db.auth.getSession();
+  const token=(sess&&sess.session)?sess.session.access_token:"";
+  const r=await fetch(SB_URL+"/functions/v1/tratar-foto",{method:"POST",
+    headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+token},
+    body:JSON.stringify({image:dataUrl,categoria:cat})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||j.error||!j.image)throw new Error(j.error||("Erro "+r.status));
+  return j.image;
+}
+document.addEventListener("click",async function(e){
+  var b=e.target.closest&&e.target.closest(".btnia");if(!b)return;
+  e.preventDefault();
+  var px=b.getAttribute("data-px"),n=+b.getAttribute("data-n");
+  var inp=$(px+"_foto"+n),fl=inp&&inp.files?inp.files[0]:null,msg=$(px+"_iamsg"+n);
+  if(!fl){if(msg)msg.innerHTML='<span class="err">Escolha ou tire a foto primeiro.</span>';return;}
+  if(msg)msg.textContent="Tratando a foto com IA... (pode levar uns 20s)";b.disabled=true;
+  try{
+    var dataUrl=await fileToDataURL(fl);
+    var cat=(px==="a"?$("aCat").value:EDIT_CAT);
+    var treated=await tratarFotoIA(dataUrl,cat);
+    AI_FOTO[px][n]=treated;PREVFOTO[px][n]=treated;atualizarPrev(px);
+    if(msg)msg.innerHTML='<span class="ok">✓ Foto tratada! Veja a prévia ao lado.</span>';
+  }catch(err){if(msg)msg.innerHTML='<span class="err">'+esc(String(err.message||err))+'</span>';}
+  b.disabled=false;
+});
 function fieldHTML(px,f,cat,d){
   d=d||{};
   switch(f){
@@ -284,6 +312,7 @@ function formHTML(px,cat,d){
 
 /* ---- PRÉVIA (card idêntico à vitrine) ---- */
 var PREVFOTO={a:{1:null,2:null},e:{1:null,2:null}};
+var AI_FOTO={a:{1:null,2:null},e:{1:null,2:null}};
 var EDIT_CAT="",EDIT_COD="";var ADD_PREFILL=null;var MEU_FORN=null,SOU_ADMIN=false,FORNS=[],FORNNOME={};
 function cardHTML(d){
   var livro=d.cat==="livros",ach=d.cat==="achadinhos",sold=d.status==="vendido";
@@ -374,7 +403,7 @@ document.addEventListener("input",function(e){
 });
 document.addEventListener("change",function(e){
   var t=e.target;if(t&&t.type==="file"){var m=(t.id||"").match(/^(a|e)_foto([12])$/);
-    if(m){var px=m[1],n=+m[2],f=t.files[0];PREVFOTO[px][n]=f?URL.createObjectURL(f):PREVFOTO[px][n];atualizarPrev(px);}}
+    if(m){var px=m[1],n=+m[2],f=t.files[0];AI_FOTO[px][n]=null;PREVFOTO[px][n]=f?URL.createObjectURL(f):PREVFOTO[px][n];atualizarPrev(px);}}
 });
 document.addEventListener("click",function(e){
   var b=e.target.closest&&e.target.closest(".vprev .cnav");if(!b)return;
@@ -432,7 +461,7 @@ $("ov").addEventListener("click",fecharModal);
 function abrirEditor(cod){
   var p=PECAS.find(x=>x.codigo===cod);if(!p)return;
   EDIT_CAT=p.categoria;EDIT_COD=p.codigo;
-  PREVFOTO.e={1:p.foto1?fotoURL(p.foto1,true):null,2:p.foto2?fotoURL(p.foto2,true):null};
+  PREVFOTO.e={1:p.foto1?fotoURL(p.foto1,true):null,2:p.foto2?fotoURL(p.foto2,true):null};AI_FOTO.e={1:null,2:null};
   $("modal").innerHTML='<h2>✎ Editar peça</h2><div class="sub" style="margin-bottom:10px">'+esc(p.codigo)+' · '+esc(CATNOME[p.categoria]||p.categoria)+'</div>'
     +'<div class="addgrid"><div id="eForm" class="formgrid">'+formHTML("e",p.categoria,p)+'</div>'
     +'<div><div class="prevwrap"><div class="prevlbl">👁️ Prévia na loja</div><div class="vprev" id="ePrev"></div></div></div></div>'
@@ -450,8 +479,10 @@ async function salvarEdicao(p){
   $("eSalvar").disabled=true;
   try{
     var f1=$("e_foto1")?$("e_foto1").files[0]:null,f2=$("e_foto2")?$("e_foto2").files[0]:null;
-    if(f1){$("eMsg").textContent="Enviando foto...";row.foto1=await subirFotoPath(p.codigo+"-1-"+Date.now(),await fileToDataURL(f1));}
-    if(cat!=="livros"&&f2){$("eMsg").textContent="Enviando foto 2...";row.foto2=await subirFotoPath(p.codigo+"-2-"+Date.now(),await fileToDataURL(f2));}
+    if(AI_FOTO.e[1]){$("eMsg").textContent="Enviando foto...";row.foto1=await subirFotoPath(p.codigo+"-1-"+Date.now(),AI_FOTO.e[1]);}
+    else if(f1){$("eMsg").textContent="Enviando foto...";row.foto1=await subirFotoPath(p.codigo+"-1-"+Date.now(),await fileToDataURL(f1));}
+    if(cat!=="livros"){if(AI_FOTO.e[2]){$("eMsg").textContent="Enviando foto 2...";row.foto2=await subirFotoPath(p.codigo+"-2-"+Date.now(),AI_FOTO.e[2]);}
+    else if(f2){$("eMsg").textContent="Enviando foto 2...";row.foto2=await subirFotoPath(p.codigo+"-2-"+Date.now(),await fileToDataURL(f2));}}
     $("eMsg").textContent="Salvando...";
     const {error}=await db.from("pecas").update(row).eq("codigo",p.codigo);
     if(error)throw new Error(error.message);
@@ -527,15 +558,17 @@ $("btnAdd").addEventListener("click",async()=>{
     var codigo=await nextCodigo(cat);row.codigo=codigo;
     var f1=$("a_foto1")?$("a_foto1").files[0]:null,f2=$("a_foto2")?$("a_foto2").files[0]:null;
     row.foto1=(ADD_PREFILL&&ADD_PREFILL.foto1)||"";row.foto2=(ADD_PREFILL&&ADD_PREFILL.foto2)||"";
-    if(f1){$("addMsg").textContent="Enviando foto ("+codigo+")...";$("addBar").style.width="40%";row.foto1=await subirFotoPath(codigo+"-1",await fileToDataURL(f1));}
-    if(cat!=="livros"&&f2){$("addMsg").textContent="Enviando foto 2...";$("addBar").style.width="70%";row.foto2=await subirFotoPath(codigo+"-2",await fileToDataURL(f2));}
+    if(AI_FOTO.a[1]){$("addMsg").textContent="Enviando foto ("+codigo+")...";$("addBar").style.width="40%";row.foto1=await subirFotoPath(codigo+"-1",AI_FOTO.a[1]);}
+    else if(f1){$("addMsg").textContent="Enviando foto ("+codigo+")...";$("addBar").style.width="40%";row.foto1=await subirFotoPath(codigo+"-1",await fileToDataURL(f1));}
+    if(cat!=="livros"){if(AI_FOTO.a[2]){$("addMsg").textContent="Enviando foto 2...";$("addBar").style.width="70%";row.foto2=await subirFotoPath(codigo+"-2",AI_FOTO.a[2]);}
+    else if(f2){$("addMsg").textContent="Enviando foto 2...";$("addBar").style.width="70%";row.foto2=await subirFotoPath(codigo+"-2",await fileToDataURL(f2));}}
     row.criado_em=new Date().toISOString();
     $("addMsg").textContent="Salvando...";$("addBar").style.width="92%";
     const {error}=await db.from("pecas").upsert(row,{onConflict:"codigo"});
     if(error)throw new Error("banco: "+error.message);
     $("addBar").style.width="100%";
     $("addMsg").innerHTML='<span class="ok">✓ Peça '+esc(codigo)+' adicionada! Já está na vitrine.</span>';
-    ADD_PREFILL=null;montarAdd();carregarPecas();
+    ADD_PREFILL=null;AI_FOTO.a={1:null,2:null};montarAdd();carregarPecas();
     setTimeout(()=>{$("addBar").style.width="0"},1500);
   }catch(e){$("addMsg").innerHTML='<span class="err">✗ '+esc(e.message)+'</span>';}
   $("btnAdd").disabled=false;
