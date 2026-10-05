@@ -210,11 +210,8 @@
         <div id="exprMsg" class="msg"></div>
       </div>
       <div class="card hid" id="exprReview">
-        <h2 style="font-size:17px;margin-bottom:8px">Revisar e publicar</h2>
-        <div class="fotos2">
-          <div class="fotocol"><div class="prevlbl">Foto 1 (chão)</div><img class="aiprev" id="exprPrev1" alt=""><button type="button" class="sec mini" id="exprRe1" style="margin-top:6px">🔁 Refazer Foto 1</button></div>
-          <div class="fotocol"><div class="prevlbl">Foto 2 (manequim invisível)</div><img class="aiprev" id="exprPrev2" alt=""><button type="button" class="sec mini" id="exprRe2" style="margin-top:6px">🔁 Refazer Foto 2</button></div>
-        </div>
+        <h2 style="font-size:17px;margin-bottom:4px">Revisar e publicar</h2>
+        <div class="sub" style="margin-bottom:8px">Confira os dados (principalmente a <b>categoria</b>). Depois gere as fotos e defina preço e tamanho.</div>
         <div class="formgrid">
           <div class="fld"><label>Categoria</label><select id="exprCat"></select></div>
           <div class="fld"><label>Título</label><input id="exprTit"></div>
@@ -223,6 +220,13 @@
           <div class="fld"><label>Tamanho *</label><input id="exprTam" placeholder="ex.: 06"></div>
           <div class="fld"><label>Preço de venda (R$) *</label><input id="exprPreco" placeholder="30,00"></div>
           <div class="fld"><label>Preço de referência / novo (R$, opcional)</label><input id="exprRef" placeholder="60,00"></div>
+        </div>
+        <button id="btnExprGerar" style="margin-top:12px;width:100%">✨ Gerar as 2 fotos de catálogo</button>
+        <div class="bar"><i id="exprBar2"></i></div>
+        <div id="exprGerMsg" class="msg"></div>
+        <div class="fotos2" style="margin-top:8px">
+          <div class="fotocol"><div class="prevlbl">Foto 1 (chão)</div><img class="aiprev" id="exprPrev1" alt=""><button type="button" class="sec mini" id="exprRe1" style="margin-top:6px;display:none">🔁 Refazer Foto 1</button></div>
+          <div class="fotocol"><div class="prevlbl">Foto 2 (no corpo / destaque)</div><img class="aiprev" id="exprPrev2" alt=""><button type="button" class="sec mini" id="exprRe2" style="margin-top:6px;display:none">🔁 Refazer Foto 2</button></div>
         </div>
         <button id="btnExprPub" style="margin-top:12px;width:100%">✅ Publicar anúncio</button>
         <button class="sec" id="btnExprVoltar" style="margin-top:8px;width:100%">← Começar outra peça</button>
@@ -743,29 +747,43 @@ async function analisarPeca(dataUrl,nota){
 }
 async function gerarFotosExpr(){
   var src=EXPR.src,j=EXPR.info,cat=$("exprCat").value||j.categoria;
-  $("exprMsg").textContent="Gerando Foto 1 (chão)...";$("exprBar").style.width="50%";
+  $("exprGerMsg").textContent="Gerando Foto 1 (chão)...";$("exprBar2").style.width="50%";
   EXPR.img1=await tratarFotoIA(src,cat,1,"","","","");if($("exprPrev1"))$("exprPrev1").src=EXPR.img1;
-  $("exprMsg").textContent="Gerando Foto 2 (manequim invisível)...";$("exprBar").style.width="85%";
+  $("exprGerMsg").textContent="Gerando Foto 2...";$("exprBar2").style.width="85%";
   EXPR.img2=await tratarFotoIA(src,cat,2,prodDe(cat),manqDe(j.sub),j.parte||"inteiro",j.estilo||"casual");if($("exprPrev2"))$("exprPrev2").src=EXPR.img2;
+  $("exprBar2").style.width="100%";
 }
 (function(){
   var b=$("btnExpr");if(b)b.addEventListener("click",async function(){
     var inp=$("exprFoto"),fl=inp&&inp.files?inp.files[0]:null;
     if(!fl){$("exprMsg").innerHTML='<span class="err">Escolha ou tire a foto da peça.</span>';return;}
-    b.disabled=true;$("exprBar").style.width="15%";$("exprMsg").textContent="Analisando a peça com IA...";
+    b.disabled=true;$("exprBar").style.width="40%";$("exprMsg").textContent="Analisando a peça com IA...";
     try{
-      EXPR.src=await fileToDataURL(fl);
+      EXPR.src=await fileToDataURL(fl);EXPR.img1=null;EXPR.img2=null;
       var j=await analisarPeca(EXPR.src,$("exprNota")?$("exprNota").value:"");EXPR.info=j;
       if($("exprCat"))$("exprCat").value=j.categoria;
       if($("exprTit"))$("exprTit").value=j.titulo||"";
       if($("exprDesc"))$("exprDesc").value=j.descricao||"";
       if($("exprCor"))$("exprCor").value=j.cor||"";
       if($("exprTam"))$("exprTam").value=j.tamanho||"";
-      await gerarFotosExpr();
+      ["exprPrev1","exprPrev2"].forEach(function(id){var el=$(id);if(el)el.removeAttribute("src");});
+      ["exprRe1","exprRe2"].forEach(function(id){var el=$(id);if(el)el.style.display="none";});
+      if($("exprGerMsg"))$("exprGerMsg").textContent="";if($("exprBar2"))$("exprBar2").style.width="0";
       $("exprBar").style.width="100%";$("exprMsg").textContent="";
       $("exprStart").classList.add("hid");$("exprReview").classList.remove("hid");
     }catch(err){$("exprMsg").innerHTML='<span class="err">'+esc(String(err.message||err))+'</span>';}
     b.disabled=false;
+  });
+  var gb=$("btnExprGerar");if(gb)gb.addEventListener("click",async function(){
+    if(!EXPR.src){$("exprGerMsg").innerHTML='<span class="err">Faça a análise primeiro.</span>';return;}
+    gb.disabled=true;$("exprGerMsg").textContent="Gerando as fotos...";
+    try{
+      await gerarFotosExpr();
+      if($("exprRe1"))$("exprRe1").style.display="inline-block";
+      if($("exprRe2"))$("exprRe2").style.display="inline-block";
+      $("exprGerMsg").innerHTML='<span class="ok">✓ Fotos geradas! Confira, defina preço e tamanho, e publique.</span>';
+    }catch(e){$("exprGerMsg").innerHTML='<span class="err">'+esc(String(e.message||e))+'</span>';}
+    gb.disabled=false;
   });
   var r1=$("exprRe1");if(r1)r1.addEventListener("click",async function(){r1.disabled=true;r1.textContent="Gerando...";try{EXPR.img1=await tratarFotoIA(EXPR.src,$("exprCat").value,1,"","","","");$("exprPrev1").src=EXPR.img1;}catch(e){}r1.textContent="🔁 Refazer Foto 1";r1.disabled=false;});
   var r2=$("exprRe2");if(r2)r2.addEventListener("click",async function(){var j=EXPR.info;r2.disabled=true;r2.textContent="Gerando...";try{var cat=$("exprCat").value;EXPR.img2=await tratarFotoIA(EXPR.src,cat,2,prodDe(cat),manqDe(j.sub),j.parte||"inteiro",j.estilo||"casual");$("exprPrev2").src=EXPR.img2;}catch(e){}r2.textContent="🔁 Refazer Foto 2";r2.disabled=false;});
@@ -774,7 +792,7 @@ async function gerarFotosExpr(){
     var preco=num($("exprPreco").value),tam=($("exprTam").value||"").trim();
     if(!preco){$("exprPubMsg").innerHTML='<span class="err">Informe o preço de venda.</span>';return;}
     if(!tam){$("exprPubMsg").innerHTML='<span class="err">Informe o tamanho.</span>';return;}
-    if(!EXPR.img1&&!EXPR.img2){$("exprPubMsg").innerHTML='<span class="err">Gere as fotos primeiro.</span>';return;}
+    if(!EXPR.img1&&!EXPR.img2){$("exprPubMsg").innerHTML='<span class="err">Clique em "Gerar as 2 fotos" antes de publicar.</span>';return;}
     pb.disabled=true;$("exprPubMsg").textContent="Publicando...";
     try{
       var cat=$("exprCat").value;var codigo=await nextCodigo(cat);
