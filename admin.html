@@ -243,19 +243,24 @@ function inp(id,v,ph){return '<input id="'+id+'" value="'+attr(v)+'" placeholder
 function txa(id,v,ph){return '<textarea id="'+id+'" placeholder="'+(ph||"")+'">'+esc(v||"")+'</textarea>';}
 function sel(id,opts,cur){return '<select id="'+id+'">'+opts.map(o=>'<option value="'+o[0]+'"'+(String(cur)===String(o[0])?" selected":"")+'>'+o[1]+'</option>').join("")+'</select>';}
 function fld(x){return '<div class="fld">'+x+'</div>';}
+function prodDe(cat){return (cat==="moda"||cat==="uniforme")?"moda":cat==="acessorios"?"acessorio":cat==="brinquedo"?"brinquedo":cat==="sapatos"?"sapatos":"objeto";}
 function fotoField(px,n,cat,cur){
   var l=n===1?(cat==="livros"?"Capa (foto)":"Foto 1 (peça)"):"Foto 2 (no corpo / detalhe)";
   var img=cur?('<img class="curfoto" src="'+fotoURL(cur,true)+'">'):"";
+  var prodsel="";
+  if(n===2){var ops=[["moda","Moda — manequim + look"],["acessorio","Acessório — em destaque"],["brinquedo","Brinquedo — cena lúdica"],["sapatos","Calçado — em destaque"],["objeto","Objeto — em destaque"]];
+    prodsel='<label style="font-size:12px;margin-top:6px;display:block">Produção da Foto 2</label><select id="'+px+'_prod2">'+ops.map(function(o){return '<option value="'+o[0]+'"'+(prodDe(cat)===o[0]?" selected":"")+'>'+o[1]+'</option>';}).join("")+'</select>';}
   return fld(lab(l)+img+'<input type="file" id="'+px+'_foto'+n+'" accept="image/*" capture="environment">'
+    +prodsel
     +'<button type="button" class="sec mini btnia" data-px="'+px+'" data-n="'+n+'" style="margin-top:6px">✨ Tratar no estilo do catálogo (IA)</button>'
     +'<div class="iamsg" id="'+px+'_iamsg'+n+'" style="font-size:11.5px;color:#6d5137;margin-top:4px"></div>');
 }
-async function tratarFotoIA(dataUrl,cat){
+async function tratarFotoIA(dataUrl,cat,n,prod){
   const {data:sess}=await db.auth.getSession();
   const token=(sess&&sess.session)?sess.session.access_token:"";
   const r=await fetch(SB_URL+"/functions/v1/tratar-foto",{method:"POST",
     headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+token},
-    body:JSON.stringify({image:dataUrl,categoria:cat})});
+    body:JSON.stringify({image:dataUrl,categoria:cat,foto:n,prod2:prod||""})});
   const j=await r.json().catch(()=>({}));
   if(!r.ok||j.error||!j.image)throw new Error(j.error||("Erro "+r.status));
   return j.image;
@@ -270,7 +275,8 @@ document.addEventListener("click",async function(e){
   try{
     var dataUrl=await fileToDataURL(fl);
     var cat=(px==="a"?$("aCat").value:EDIT_CAT);
-    var treated=await tratarFotoIA(dataUrl,cat);
+    var prod=(n===2&&$(px+"_prod2"))?$(px+"_prod2").value:"";
+    var treated=await tratarFotoIA(dataUrl,cat,n,prod);
     AI_FOTO[px][n]=treated;PREVFOTO[px][n]=treated;atualizarPrev(px);
     if(msg)msg.innerHTML='<span class="ok">✓ Foto tratada! Veja a prévia ao lado.</span>';
   }catch(err){if(msg)msg.innerHTML='<span class="err">'+esc(String(err.message||err))+'</span>';}
