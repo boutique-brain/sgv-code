@@ -103,6 +103,9 @@
   .vprev .soldtag{position:absolute;top:8px;left:8px;z-index:3;background:var(--vermelho);color:#fff;font-size:11px;font-weight:800;padding:4px 9px;border-radius:8px}
   .curfoto{width:92px;aspect-ratio:4/5;object-fit:cover;border-radius:8px;display:block;margin:2px 0 5px}
 .aiprev{width:100%;max-width:300px;height:auto;object-fit:contain;border-radius:10px;display:block;margin:8px auto 2px;box-shadow:0 2px 10px rgba(74,53,38,.18);border:1px solid #e4d6bd;cursor:zoom-in;background:#efe7d6}
+.fotos2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;align-items:start}
+.fotocol{background:#fdfaf3;border:1px solid #ecdfc6;border-radius:12px;padding:12px}
+@media(max-width:560px){.fotos2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -168,7 +171,7 @@
           <div><label>Categoria</label><select id="aCat"></select></div>
         </div>
         <div class="addgrid">
-          <div id="aForm" class="formgrid"></div>
+          <div id="aForm"></div>
           <div><div class="prevwrap"><div class="prevlbl">👁️ Prévia na loja</div><div class="vprev" id="aPrev"></div></div></div>
         </div>
         <button id="btnAdd" style="margin-top:14px;width:100%">Salvar peça no banco</button>
@@ -318,7 +321,11 @@ function fieldHTML(px,f,cat,d){
 }
 function formHTML(px,cat,d){
   d=d||{};
-  var out=campos(cat).map(f=>fieldHTML(px,f,cat,d)).join("");
+  var cs=campos(cat);
+  var fotos=cs.filter(function(f){return f==="foto1"||f==="foto2";});
+  var resto=cs.filter(function(f){return f!=="foto1"&&f!=="foto2";});
+  var out='<div class="fotos2">'+fotos.map(function(f){return '<div class="fotocol">'+fieldHTML(px,f,cat,d)+'</div>';}).join("")+'</div>';
+  out+='<div class="formgrid">'+resto.map(f=>fieldHTML(px,f,cat,d)).join("")+'';
   out+='<details class="fld" open><summary class="sub" style="cursor:pointer">📦 Peso e dimensões (opcional — para o frete, não aparece na loja)</summary>'
      +'<div class="row2">'+fld(lab("Peso (kg)")+inp(px+"_peso",d.peso,"0.3"))+fld(lab("Largura (cm)")+inp(px+"_larg",d.largura,"20"))+'</div>'
      +'<div class="row2">'+fld(lab("Altura (cm)")+inp(px+"_alt",d.altura,"5"))+fld(lab("Comprimento (cm)")+inp(px+"_comp",d.comprimento,"30"))+'</div></details>';
@@ -327,6 +334,7 @@ function formHTML(px,cat,d){
       +fld(lab("Situação")+sel("e_status",STATUS,d.status||"disponivel"))
       +fld(lab("Visível na vitrine")+sel("e_vis",[["true","Sim"],["false","Não (esconder)"]],d.disponivel===false?"false":"true"))+'</div>';
   }
+  out+='</div>';
   return out;
 }
 
@@ -488,7 +496,7 @@ function abrirEditor(cod){
   EDIT_CAT=p.categoria;EDIT_COD=p.codigo;
   PREVFOTO.e={1:p.foto1?fotoURL(p.foto1,true):null,2:p.foto2?fotoURL(p.foto2,true):null};AI_FOTO.e={1:null,2:null};
   $("modal").innerHTML='<h2>✎ Editar peça</h2><div class="sub" style="margin-bottom:10px">'+esc(p.codigo)+' · '+esc(CATNOME[p.categoria]||p.categoria)+'</div>'
-    +'<div class="addgrid"><div id="eForm" class="formgrid">'+formHTML("e",p.categoria,p)+'</div>'
+    +'<div class="addgrid"><div id="eForm">'+formHTML("e",p.categoria,p)+'</div>'
     +'<div><div class="prevwrap"><div class="prevlbl">👁️ Prévia na loja</div><div class="vprev" id="ePrev"></div></div></div></div>'
     +'<div style="display:flex;gap:8px;margin-top:16px"><button id="eSalvar" style="flex:1">Salvar</button><button class="sec" id="eCancel">Cancelar</button><button class="danger mini" id="eDel">🗑 Excluir</button></div>'
     +'<div id="eMsg" class="msg"></div>';
