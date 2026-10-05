@@ -745,5 +745,16 @@ $("vendasLista").addEventListener("click",async e=>{
 });
 </script>
 <datalist id="cores_dl"><option value="Amarelo"><option value="Azul"><option value="Azul-claro"><option value="Azul-marinho"><option value="Bege"><option value="Branco"><option value="Caramelo"><option value="Cinza"><option value="Dourado"><option value="Estampado"><option value="Floral"><option value="Laranja"><option value="Lilás"><option value="Listrado"><option value="Marrom"><option value="Mostarda"><option value="Nude"><option value="Ocre"><option value="Off white"><option value="Pink"><option value="Prata"><option value="Preto"><option value="Rosa"><option value="Roxo"><option value="Salmão"><option value="Verde"><option value="Verde-bandeira"><option value="Verde-escuro"><option value="Verde-oliva"><option value="Vermelho"><option value="Vinho"><option value="Xadrez"></datalist>
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;align-items:center;justify-content:center;padding:18px;cursor:zoom-out"><img id="lbimg" alt="" style="max-width:96%;max-height:96%;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.5)"></div>
+<style>.vprev .slide img{cursor:zoom-in}.vprev .carousel{cursor:zoom-in}</style>
+<script>
+document.addEventListener("click",function(e){
+  var t=e.target;
+  var img=t.closest&&t.closest(".vprev .slide img, .vprev .carousel img");
+  if(img){document.getElementById("lbimg").src=img.src||img.getAttribute("src")||"";document.getElementById("lightbox").style.display="flex";return;}
+  if(t&&(t.id==="lightbox"||t.id==="lbimg")){document.getElementById("lightbox").style.display="none";}
+});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){var lb=document.getElementById("lightbox");if(lb)lb.style.display="none";}});
+</script>
 </body>
 </html>
