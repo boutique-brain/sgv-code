@@ -263,7 +263,7 @@ function fotoField(px,n,cat,cur){
   return fld(lab(l)+img+'<input type="file" id="'+px+'_foto'+n+'" accept="image/*" capture="environment">'
     +prodsel
     +'<button type="button" class="sec mini btnia" data-px="'+px+'" data-n="'+n+'" style="margin-top:6px">✨ Tratar no estilo do catálogo (IA)</button>'
-    +'<div class="iamsg" id="'+px+'_iamsg'+n+'" style="font-size:11.5px;color:#6d5137;margin-top:4px"></div>'+'<img class="aiprev" id="'+px+'_prev'+n+'" alt="" style="display:none">');
+    +'<div class="iamsg" id="'+px+'_iamsg'+n+'" style="font-size:11.5px;color:#6d5137;margin-top:4px"></div>'+'<button type="button" class="sec mini btnia" data-px="'+px+'" data-n="'+n+'" style="margin-top:4px;display:none" id="'+px+'_regen'+n+'">🔁 Gerar outra opção</button>'+'<img class="aiprev" id="'+px+'_prev'+n+'" alt="" style="display:none">');
 }
 async function tratarFotoIA(dataUrl,cat,n,prod,manq,parte,estilo){
   const {data:sess}=await db.auth.getSession();
@@ -291,7 +291,8 @@ document.addEventListener("click",async function(e){
     var estilo=(n===2&&$(px+"_estilo"))?$(px+"_estilo").value:"";
     var treated=await tratarFotoIA(dataUrl,cat,n,prod,manq,parte,estilo);
     AI_FOTO[px][n]=treated;PREVFOTO[px][n]=treated;atualizarPrev(px);
-    if(msg)msg.innerHTML='<span class="ok">✓ Foto tratada! Veja a prévia ao lado.</span>';
+    var rg=$(px+"_regen"+n);if(rg)rg.style.display="inline-block";
+    if(msg)msg.innerHTML='<span class="ok">✓ Foto tratada! Veja a prévia abaixo. Não gostou? Clique em "Gerar outra opção".</span>';
   }catch(err){if(msg)msg.innerHTML='<span class="err">'+esc(String(err.message||err))+'</span>';}
   b.disabled=false;
 });
