@@ -129,6 +129,7 @@
       <button class="tab on" data-tab="pecas">📦 Peças</button>
       <button class="tab" data-tab="vendas">🧾 Vendas</button>
       <button class="tab" data-tab="add">➕ Adicionar peça</button>
+      <button class="tab" data-tab="expr">⚡ Expresso</button>
       <button class="tab admin-only hid" data-tab="fornec">🏪 Fornecedores</button>
     </div>
 
@@ -192,6 +193,41 @@
       </div>
       <div class="sub" id="fornCount" style="margin:12px 0 8px"></div>
       <div id="fornLista" class="lista"></div>
+    </div>
+
+    <!-- CADASTRO EXPRESSO -->
+    <div id="tab-expr" class="hid">
+      <div class="card" id="exprStart">
+        <h2 style="font-size:17px;margin-bottom:2px">⚡ Cadastro expresso</h2>
+        <div class="sub" style="margin-bottom:8px">Envie 1 foto da peça. A IA identifica a categoria, escreve título e descrição, detecta a cor e gera as 2 fotos de catálogo. Você só confere e define preço e tamanho.</div>
+        <div id="exprFornWrap" class="admin-only hid" style="margin-bottom:8px"><label>Fornecedor (dono da peça)</label><select id="exprForn"></select></div>
+        <div class="row2">
+          <div class="fld"><label>Foto da peça</label><input type="file" id="exprFoto" accept="image/*" capture="environment"></div>
+          <div class="fld"><label>Observação (opcional)</label><input id="exprNota" placeholder="ex.: vestido jeans infantil"></div>
+        </div>
+        <button id="btnExpr" style="margin-top:12px;width:100%">✨ Criar anúncio com IA</button>
+        <div class="bar"><i id="exprBar"></i></div>
+        <div id="exprMsg" class="msg"></div>
+      </div>
+      <div class="card hid" id="exprReview">
+        <h2 style="font-size:17px;margin-bottom:8px">Revisar e publicar</h2>
+        <div class="fotos2">
+          <div class="fotocol"><div class="prevlbl">Foto 1 (chão)</div><img class="aiprev" id="exprPrev1" alt=""><button type="button" class="sec mini" id="exprRe1" style="margin-top:6px">🔁 Refazer Foto 1</button></div>
+          <div class="fotocol"><div class="prevlbl">Foto 2 (manequim invisível)</div><img class="aiprev" id="exprPrev2" alt=""><button type="button" class="sec mini" id="exprRe2" style="margin-top:6px">🔁 Refazer Foto 2</button></div>
+        </div>
+        <div class="formgrid">
+          <div class="fld"><label>Categoria</label><select id="exprCat"></select></div>
+          <div class="fld"><label>Título</label><input id="exprTit"></div>
+          <div class="fld"><label>Descrição</label><input id="exprDesc"></div>
+          <div class="fld"><label>Cor</label><input id="exprCor" list="cores_dl"></div>
+          <div class="fld"><label>Tamanho *</label><input id="exprTam" placeholder="ex.: 06"></div>
+          <div class="fld"><label>Preço de venda (R$) *</label><input id="exprPreco" placeholder="30,00"></div>
+          <div class="fld"><label>Preço de referência / novo (R$, opcional)</label><input id="exprRef" placeholder="60,00"></div>
+        </div>
+        <button id="btnExprPub" style="margin-top:12px;width:100%">✅ Publicar anúncio</button>
+        <button class="sec" id="btnExprVoltar" style="margin-top:8px;width:100%">← Começar outra peça</button>
+        <div id="exprPubMsg" class="msg"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -425,8 +461,10 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   $("tab-vendas").classList.toggle("hid",k!=="vendas");
   $("tab-add").classList.toggle("hid",k!=="add");
   $("tab-fornec").classList.toggle("hid",k!=="fornec");
+  $("tab-expr").classList.toggle("hid",k!=="expr");
   if(k==="vendas")carregarVendas();
   if(k==="fornec")carregarFornecedores();
+  if(k==="expr")montarExpr();
 }));
 
 /* ---- preview: listeners delegados ---- */
@@ -687,6 +725,78 @@ document.addEventListener("DOMContentLoaded",function(){
   var fl=$("fornLista");
   if(fl)fl.addEventListener("click",e=>{var b=e.target.closest&&e.target.closest("button[data-fedit]");if(b)abrirFornEditor(b.getAttribute("data-fedit"));});
 });
+
+/* ---- CADASTRO EXPRESSO ---- */
+var EXPR={src:null,img1:null,img2:null,info:{}};
+function manqDe(sub){return sub==="fem"?"feminino":sub==="masc"?"masculino":"infantil";}
+function montarExpr(){
+  var sc=$("exprCat");if(sc)sc.innerHTML=CATS.map(function(c){return '<option value="'+c[0]+'">'+c[1]+'</option>';}).join("");
+  var ef=$("exprForn");if(ef)ef.innerHTML=(FORNS.length?FORNS:[{id:MEU_FORN,nome:"Baú — Amanda"}]).map(function(x){return '<option value="'+x.id+'"'+(x.id===MEU_FORN?" selected":"")+'>'+esc(x.nome)+'</option>';}).join("");
+  $("exprReview").classList.add("hid");$("exprStart").classList.remove("hid");
+}
+async function analisarPeca(dataUrl,nota){
+  const {data:sess}=await db.auth.getSession();const token=(sess&&sess.session)?sess.session.access_token:"";
+  const r=await fetch(SB_URL+"/functions/v1/analisar-peca",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+token},body:JSON.stringify({image:dataUrl,nota:nota||""})});
+  const j=await r.json().catch(function(){return {};});
+  if(!r.ok||j.error)throw new Error(j.error||("Erro "+r.status));
+  return j;
+}
+async function gerarFotosExpr(){
+  var src=EXPR.src,j=EXPR.info,cat=$("exprCat").value||j.categoria;
+  $("exprMsg").textContent="Gerando Foto 1 (chão)...";$("exprBar").style.width="50%";
+  EXPR.img1=await tratarFotoIA(src,cat,1,"","","","");if($("exprPrev1"))$("exprPrev1").src=EXPR.img1;
+  $("exprMsg").textContent="Gerando Foto 2 (manequim invisível)...";$("exprBar").style.width="85%";
+  EXPR.img2=await tratarFotoIA(src,cat,2,prodDe(cat),manqDe(j.sub),j.parte||"inteiro",j.estilo||"casual");if($("exprPrev2"))$("exprPrev2").src=EXPR.img2;
+}
+(function(){
+  var b=$("btnExpr");if(b)b.addEventListener("click",async function(){
+    var inp=$("exprFoto"),fl=inp&&inp.files?inp.files[0]:null;
+    if(!fl){$("exprMsg").innerHTML='<span class="err">Escolha ou tire a foto da peça.</span>';return;}
+    b.disabled=true;$("exprBar").style.width="15%";$("exprMsg").textContent="Analisando a peça com IA...";
+    try{
+      EXPR.src=await fileToDataURL(fl);
+      var j=await analisarPeca(EXPR.src,$("exprNota")?$("exprNota").value:"");EXPR.info=j;
+      if($("exprCat"))$("exprCat").value=j.categoria;
+      if($("exprTit"))$("exprTit").value=j.titulo||"";
+      if($("exprDesc"))$("exprDesc").value=j.descricao||"";
+      if($("exprCor"))$("exprCor").value=j.cor||"";
+      if($("exprTam"))$("exprTam").value=j.tamanho||"";
+      await gerarFotosExpr();
+      $("exprBar").style.width="100%";$("exprMsg").textContent="";
+      $("exprStart").classList.add("hid");$("exprReview").classList.remove("hid");
+    }catch(err){$("exprMsg").innerHTML='<span class="err">'+esc(String(err.message||err))+'</span>';}
+    b.disabled=false;
+  });
+  var r1=$("exprRe1");if(r1)r1.addEventListener("click",async function(){r1.disabled=true;r1.textContent="Gerando...";try{EXPR.img1=await tratarFotoIA(EXPR.src,$("exprCat").value,1,"","","","");$("exprPrev1").src=EXPR.img1;}catch(e){}r1.textContent="🔁 Refazer Foto 1";r1.disabled=false;});
+  var r2=$("exprRe2");if(r2)r2.addEventListener("click",async function(){var j=EXPR.info;r2.disabled=true;r2.textContent="Gerando...";try{var cat=$("exprCat").value;EXPR.img2=await tratarFotoIA(EXPR.src,cat,2,prodDe(cat),manqDe(j.sub),j.parte||"inteiro",j.estilo||"casual");$("exprPrev2").src=EXPR.img2;}catch(e){}r2.textContent="🔁 Refazer Foto 2";r2.disabled=false;});
+  var vb=$("btnExprVoltar");if(vb)vb.addEventListener("click",function(){EXPR={src:null,img1:null,img2:null,info:{}};if($("exprFoto"))$("exprFoto").value="";if($("exprNota"))$("exprNota").value="";["exprPreco","exprRef"].forEach(function(id){if($(id))$(id).value="";});montarExpr();});
+  var pb=$("btnExprPub");if(pb)pb.addEventListener("click",async function(){
+    var preco=num($("exprPreco").value),tam=($("exprTam").value||"").trim();
+    if(!preco){$("exprPubMsg").innerHTML='<span class="err">Informe o preço de venda.</span>';return;}
+    if(!tam){$("exprPubMsg").innerHTML='<span class="err">Informe o tamanho.</span>';return;}
+    if(!EXPR.img1&&!EXPR.img2){$("exprPubMsg").innerHTML='<span class="err">Gere as fotos primeiro.</span>';return;}
+    pb.disabled=true;$("exprPubMsg").textContent="Publicando...";
+    try{
+      var cat=$("exprCat").value;var codigo=await nextCodigo(cat);
+      var row={categoria:cat,titulo:($("exprTit").value||"").trim()||"(sem título)",descricao:($("exprDesc").value||"").trim(),
+        subcategoria:cat==="moda"?(EXPR.info.sub||""):"",tamanho:tam,rotulo_tam:rotuloDe(cat),
+        cor:($("exprCor").value||"").trim(),preco:preco,preco_ref:num($("exprRef").value),
+        selo:"",status:"disponivel",disponivel:true,codigo:codigo,criado_em:new Date().toISOString()};
+      row.fornecedor_id=(SOU_ADMIN&&$("exprForn")&&$("exprForn").value)?$("exprForn").value:MEU_FORN;
+      if(EXPR.img1)row.foto1=await subirFotoPath(codigo+"-1",EXPR.img1);
+      if(EXPR.img2&&cat!=="livros")row.foto2=await subirFotoPath(codigo+"-2",EXPR.img2);
+      const {error}=await db.from("pecas").upsert(row,{onConflict:"codigo"});
+      if(error)throw new Error(error.message);
+      $("exprPubMsg").innerHTML='<span class="ok">✓ Anúncio '+esc(codigo)+' publicado! Já está na vitrine.</span>';
+      EXPR={src:null,img1:null,img2:null,info:{}};
+      if($("exprFoto"))$("exprFoto").value="";if($("exprNota"))$("exprNota").value="";
+      ["exprPreco","exprRef","exprTam","exprTit","exprDesc","exprCor"].forEach(function(id){if($(id))$(id).value="";});
+      carregarPecas();
+      setTimeout(function(){montarExpr();$("exprPubMsg").textContent="";},1800);
+    }catch(e){$("exprPubMsg").innerHTML='<span class="err">'+esc(e.message)+'</span>';}
+    pb.disabled=false;
+  });
+})();
 
 /* ---- VENDAS ---- */
 function pagBadge(p){var pix=/pix/i.test(p.obs||'');var st=p.status||'novo';if(st==='pago')return '<div class="pbadge pgok">💰 Pagamento confirmado</div>';if(st==='cancelado')return '<div class="pbadge pgx">✖ Cancelado</div>';if(st==='aguardando'||pix)return '<div class="pbadge pgpend">💠 PIX — aguardando conferência</div>';return '<div class="pbadge pgnew">🆕 Novo — pagamento a combinar</div>';}
