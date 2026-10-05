@@ -11,7 +11,7 @@
   :root{--bg:#efe7d6;--card:#fff;--marrom:#4a3526;--marrom2:#6d5137;--destaque:#a8703c;--verde:#4e6b2d;--verde2:#5c7a35;--laranja:#cf821d;--vermelho:#c0392b}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--marrom);line-height:1.45}
-  .wrap{max-width:1040px;margin:0 auto;padding:18px 14px 60px}
+  .wrap{max-width:1220px;margin:0 auto;padding:18px 16px 60px}
   h1{font-size:20px}.sub{color:var(--marrom2);font-size:13px}
   .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 4px 14px rgba(74,53,38,.12);margin-bottom:14px}
   label{display:block;font-size:12.5px;font-weight:700;margin:10px 0 4px}
@@ -62,7 +62,7 @@
   @media(max-width:560px){.formgrid{grid-template-columns:1fr}}
   .modal h2{font-size:17px;margin-bottom:4px}
   /* layout add: form + preview */
-  .addgrid{display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start;margin-top:8px}
+  .addgrid{display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start;margin-top:8px}
   @media(max-width:720px){.addgrid{grid-template-columns:1fr}}
   .prevlbl{font-size:12px;font-weight:800;color:var(--marrom2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;text-align:center}
   .prevwrap{position:sticky;top:12px}
@@ -102,6 +102,7 @@
   .vprev .card.sold .carousel{filter:grayscale(.55);opacity:.7}
   .vprev .soldtag{position:absolute;top:8px;left:8px;z-index:3;background:var(--vermelho);color:#fff;font-size:11px;font-weight:800;padding:4px 9px;border-radius:8px}
   .curfoto{width:92px;aspect-ratio:4/5;object-fit:cover;border-radius:8px;display:block;margin:2px 0 5px}
+.aiprev{width:100%;max-width:260px;aspect-ratio:4/5;object-fit:cover;border-radius:10px;display:block;margin:8px auto 2px;box-shadow:0 2px 10px rgba(74,53,38,.18);border:1px solid #e4d6bd;cursor:zoom-in}
 </style>
 </head>
 <body>
@@ -162,8 +163,10 @@
       <div class="card">
         <h2 style="font-size:17px;margin-bottom:2px">➕ Adicionar peça</h2>
         <div class="sub" style="margin-bottom:6px">Só aparecem os campos que realmente vão para a loja. O código é gerado automático.</div>
-        <div id="aFornWrap" class="admin-only hid"><label>Fornecedor (dono da peça)</label><select id="aForn"></select></div>
-        <label>Categoria</label><select id="aCat"></select>
+        <div class="row2">
+          <div id="aFornWrap" class="admin-only hid"><label>Fornecedor (dono da peça)</label><select id="aForn"></select></div>
+          <div><label>Categoria</label><select id="aCat"></select></div>
+        </div>
         <div class="addgrid">
           <div id="aForm" class="formgrid"></div>
           <div><div class="prevwrap"><div class="prevlbl">👁️ Prévia na loja</div><div class="vprev" id="aPrev"></div></div></div>
@@ -247,7 +250,7 @@ function prodDe(cat){return (cat==="moda"||cat==="uniforme")?"moda":cat==="acess
 function toggleModaOpts(px){var sel=$(px+"_prod2"),box=$(px+"_modaopts");if(sel&&box)box.style.display=(sel.value==="moda")?"block":"none";}
 function fotoField(px,n,cat,cur){
   var l=n===1?(cat==="livros"?"Capa (foto)":"Foto 1 (peça)"):"Foto 2 (no corpo / detalhe)";
-  var img=cur?('<img class="curfoto" src="'+fotoURL(cur,true)+'">'):"";
+  var img="";
   var prodsel="";
   if(n===2){var ops=[["moda","Moda — manequim invisível + look"],["acessorio","Acessório — em destaque"],["brinquedo","Brinquedo — cena lúdica"],["sapatos","Calçado — em destaque"],["objeto","Objeto — em destaque"]];
     var ehmoda=prodDe(cat)==="moda";
@@ -260,7 +263,7 @@ function fotoField(px,n,cat,cur){
   return fld(lab(l)+img+'<input type="file" id="'+px+'_foto'+n+'" accept="image/*" capture="environment">'
     +prodsel
     +'<button type="button" class="sec mini btnia" data-px="'+px+'" data-n="'+n+'" style="margin-top:6px">✨ Tratar no estilo do catálogo (IA)</button>'
-    +'<div class="iamsg" id="'+px+'_iamsg'+n+'" style="font-size:11.5px;color:#6d5137;margin-top:4px"></div>');
+    +'<div class="iamsg" id="'+px+'_iamsg'+n+'" style="font-size:11.5px;color:#6d5137;margin-top:4px"></div>'+'<img class="aiprev" id="'+px+'_prev'+n+'" alt="" style="display:none">');
 }
 async function tratarFotoIA(dataUrl,cat,n,prod,manq,parte,estilo){
   const {data:sess}=await db.auth.getSession();
@@ -369,10 +372,15 @@ function getPrev(px,cat){
   else{if(f2)d._slides.push({img:f2});if(f1)d._slides.push({img:f1});}
   return d;
 }
+function syncFotoThumbs(px){
+  [1,2].forEach(function(n){var el=$(px+"_prev"+n);if(!el)return;var src=PREVFOTO[px]&&PREVFOTO[px][n];
+    if(src){el.src=src;el.style.display="block";}else{el.removeAttribute("src");el.style.display="none";}});
+}
 function atualizarPrev(px){
   var cat=px==="a"?$("aCat").value:EDIT_CAT;
   var el=$(px==="a"?"aPrev":"ePrev");
   if(el)el.innerHTML=cardHTML(getPrev(px,cat));
+  syncFotoThumbs(px);
 }
 
 /* ---- LOGIN ---- */
@@ -760,7 +768,7 @@ $("vendasLista").addEventListener("click",async e=>{
 <script>
 document.addEventListener("click",function(e){
   var t=e.target;
-  var img=t.closest&&t.closest(".vprev .slide img, .vprev .carousel img");
+  var img=t.closest&&t.closest(".vprev .slide img, .vprev .carousel img, .aiprev");
   if(img){document.getElementById("lbimg").src=img.src||img.getAttribute("src")||"";document.getElementById("lightbox").style.display="flex";return;}
   if(t&&(t.id==="lightbox"||t.id==="lbimg")){document.getElementById("lightbox").style.display="none";}
 });
