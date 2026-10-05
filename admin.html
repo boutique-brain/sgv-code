@@ -255,18 +255,19 @@ function fotoField(px,n,cat,cur){
       +'<div id="'+px+'_modaopts" style="margin-top:6px'+(ehmoda?'':';display:none')+'">'
       +'<label style="font-size:12px;display:block">Manequim</label><select id="'+px+'_manq"><option value="infantil">Infantil</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option></select>'
       +'<label style="font-size:12px;display:block;margin-top:6px">A peça é</label><select id="'+px+'_parte"><option value="inteiro">Look inteiro</option><option value="cima">Parte de cima</option><option value="baixo">Parte de baixo</option></select>'
+      +'<label style="font-size:12px;display:block;margin-top:6px">Estilo do look (define o calçado)</label><select id="'+px+'_estilo"><option value="casual">Casual</option><option value="esporte">Esportivo</option><option value="social">Social / Festa</option><option value="praia">Praia / Verão</option></select>'
       +'</div>';}
   return fld(lab(l)+img+'<input type="file" id="'+px+'_foto'+n+'" accept="image/*" capture="environment">'
     +prodsel
     +'<button type="button" class="sec mini btnia" data-px="'+px+'" data-n="'+n+'" style="margin-top:6px">✨ Tratar no estilo do catálogo (IA)</button>'
     +'<div class="iamsg" id="'+px+'_iamsg'+n+'" style="font-size:11.5px;color:#6d5137;margin-top:4px"></div>');
 }
-async function tratarFotoIA(dataUrl,cat,n,prod,manq,parte){
+async function tratarFotoIA(dataUrl,cat,n,prod,manq,parte,estilo){
   const {data:sess}=await db.auth.getSession();
   const token=(sess&&sess.session)?sess.session.access_token:"";
   const r=await fetch(SB_URL+"/functions/v1/tratar-foto",{method:"POST",
     headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+token},
-    body:JSON.stringify({image:dataUrl,categoria:cat,foto:n,prod2:prod||"",manq:manq||"",parte:parte||""})});
+    body:JSON.stringify({image:dataUrl,categoria:cat,foto:n,prod2:prod||"",manq:manq||"",parte:parte||"",estilo:estilo||""})});
   const j=await r.json().catch(()=>({}));
   if(!r.ok||j.error||!j.image)throw new Error(j.error||("Erro "+r.status));
   return j.image;
@@ -284,7 +285,8 @@ document.addEventListener("click",async function(e){
     var prod=(n===2&&$(px+"_prod2"))?$(px+"_prod2").value:"";
     var manq=(n===2&&$(px+"_manq"))?$(px+"_manq").value:"";
     var parte=(n===2&&$(px+"_parte"))?$(px+"_parte").value:"";
-    var treated=await tratarFotoIA(dataUrl,cat,n,prod,manq,parte);
+    var estilo=(n===2&&$(px+"_estilo"))?$(px+"_estilo").value:"";
+    var treated=await tratarFotoIA(dataUrl,cat,n,prod,manq,parte,estilo);
     AI_FOTO[px][n]=treated;PREVFOTO[px][n]=treated;atualizarPrev(px);
     if(msg)msg.innerHTML='<span class="ok">✓ Foto tratada! Veja a prévia ao lado.</span>';
   }catch(err){if(msg)msg.innerHTML='<span class="err">'+esc(String(err.message||err))+'</span>';}
