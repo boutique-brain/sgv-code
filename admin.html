@@ -231,6 +231,7 @@
           <div class="fld"><label>Preço de referência / novo (R$, opcional)</label><input id="exprRef" placeholder="60,00"></div>
         </div>
         <div class="fld" style="margin-top:8px"><label>Foto 2 — estilo</label><select id="exprModelo"><option value="destaque">Em destaque (só a peça / manequim)</option><option value="modelo_f">Com modelo — Mulher (adulto)</option><option value="modelo_m">Com modelo — Homem (adulto)</option></select></div>
+        <div class="fld" style="margin-top:8px"><label>Estilo do look (define o calçado)</label><select id="exprEstilo"><option value="casual">Casual</option><option value="esporte">Esportivo</option><option value="social">Social / Festa</option><option value="praia">Praia / Verão</option></select></div>
         <button id="btnExprGerar" style="margin-top:12px;width:100%">✨ Gerar as 2 fotos de catálogo</button>
         <div class="bar"><i id="exprBar2"></i></div>
         <div id="exprGerMsg" class="msg"></div>
@@ -814,7 +815,7 @@ async function gerarFotosExpr(){
   EXPR.img1=await tratarFotoIA(src,cat,1,"","","","");if($("exprPrev1"))$("exprPrev1").src=EXPR.img1;
   $("exprGerMsg").textContent="Gerando Foto 2...";$("exprBar2").style.width="85%";
   var mv=$("exprModelo")?$("exprModelo").value:"destaque";var comModelo=(mv!=="destaque");var manq2=comModelo?(mv==="modelo_m"?"masculino":"feminino"):manqDe(j.sub);
-  EXPR.img2=await tratarFotoIA(src,cat,2,prodDe(cat),manq2,j.parte||"inteiro",j.estilo||"casual",comModelo);if($("exprPrev2"))$("exprPrev2").src=EXPR.img2;
+  EXPR.img2=await tratarFotoIA(src,cat,2,prodDe(cat),manq2,j.parte||"inteiro",(($("exprEstilo")&&$("exprEstilo").value)||j.estilo||"casual"),comModelo);if($("exprPrev2"))$("exprPrev2").src=EXPR.img2;
   $("exprBar2").style.width="100%";
 }
 (function(){
@@ -827,6 +828,7 @@ async function gerarFotosExpr(){
       var j=await analisarPeca(EXPR.src,$("exprNota")?$("exprNota").value:"");EXPR.info=j;
       if($("exprCat"))$("exprCat").value=j.categoria;
       if($("exprModelo"))$("exprModelo").value=(j.categoria==="acessorios")?"modelo_f":"destaque";
+      if($("exprEstilo"))$("exprEstilo").value=(["casual","esporte","social","praia"].indexOf(j.estilo)>=0?j.estilo:"casual");
       if($("exprTit"))$("exprTit").value=j.titulo||"";
       if($("exprDesc"))$("exprDesc").value=j.descricao||"";
       if($("exprCor"))$("exprCor").value=j.cor||"";
@@ -851,7 +853,7 @@ async function gerarFotosExpr(){
     gb.disabled=false;
   });
   var r1=$("exprRe1");if(r1)r1.addEventListener("click",async function(){r1.disabled=true;r1.textContent="Gerando...";try{EXPR.img1=await tratarFotoIA(EXPR.src,$("exprCat").value,1,"","","","");$("exprPrev1").src=EXPR.img1;}catch(e){}r1.textContent="🔁 Refazer Foto 1";r1.disabled=false;});
-  var r2=$("exprRe2");if(r2)r2.addEventListener("click",async function(){var j=EXPR.info;r2.disabled=true;r2.textContent="Gerando...";try{var cat=$("exprCat").value;var mv=$("exprModelo")?$("exprModelo").value:"destaque";var comModelo=(mv!=="destaque");var manq2=comModelo?(mv==="modelo_m"?"masculino":"feminino"):manqDe(j.sub);EXPR.img2=await tratarFotoIA(EXPR.src,cat,2,prodDe(cat),manq2,j.parte||"inteiro",j.estilo||"casual",comModelo);$("exprPrev2").src=EXPR.img2;}catch(e){}r2.textContent="🔁 Refazer Foto 2";r2.disabled=false;});
+  var r2=$("exprRe2");if(r2)r2.addEventListener("click",async function(){var j=EXPR.info;r2.disabled=true;r2.textContent="Gerando...";try{var cat=$("exprCat").value;var mv=$("exprModelo")?$("exprModelo").value:"destaque";var comModelo=(mv!=="destaque");var manq2=comModelo?(mv==="modelo_m"?"masculino":"feminino"):manqDe(j.sub);EXPR.img2=await tratarFotoIA(EXPR.src,cat,2,prodDe(cat),manq2,j.parte||"inteiro",(($("exprEstilo")&&$("exprEstilo").value)||j.estilo||"casual"),comModelo);$("exprPrev2").src=EXPR.img2;}catch(e){}r2.textContent="🔁 Refazer Foto 2";r2.disabled=false;});
   var vb=$("btnExprVoltar");if(vb)vb.addEventListener("click",function(){EXPR={src:null,img1:null,img2:null,info:{}};if($("exprFoto"))$("exprFoto").value="";if($("exprNota"))$("exprNota").value="";["exprPreco","exprRef"].forEach(function(id){if($(id))$(id).value="";});montarExpr();});
   var pb=$("btnExprPub");if(pb)pb.addEventListener("click",async function(){
     var preco=num($("exprPreco").value),tam=($("exprTam").value||"").trim();
