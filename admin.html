@@ -232,6 +232,7 @@
         </div>
         <div class="fld" style="margin-top:8px"><label>Foto 2 — estilo</label><select id="exprModelo"><option value="destaque">Em destaque (só a peça / manequim)</option><option value="modelo_f">Com modelo — Mulher (adulto)</option><option value="modelo_m">Com modelo — Homem (adulto)</option></select></div>
         <div class="fld" style="margin-top:8px"><label>Estilo do look (define o calçado)</label><select id="exprEstilo"><option value="casual">Casual</option><option value="esporte">Esportivo</option><option value="social">Social / Festa</option><option value="praia">Praia / Verão</option></select></div>
+        <div class="fld" style="margin-top:8px"><label>Tipo de modelo (quando com modelo)</label><select id="exprTipo"><option value="loira">Loira · olhos mel</option><option value="morena">Morena · castanhos</option><option value="ruiva">Ruiva</option></select></div>
         <button id="btnExprGerar" style="margin-top:12px;width:100%">✨ Gerar as 2 fotos de catálogo</button>
         <div class="bar"><i id="exprBar2"></i></div>
         <div id="exprGerMsg" class="msg"></div>
@@ -310,6 +311,7 @@ function fotoField(px,n,cat,cur){
     var ehmoda=prodDe(cat)==="moda";
     prodsel='<label style="font-size:12px;margin-top:6px;display:block">Produção da Foto 2</label><select id="'+px+'_prod2" onchange="toggleModaOpts(\''+px+'\')">'+ops.map(function(o){return '<option value="'+o[0]+'"'+(prodDe(cat)===o[0]?" selected":"")+'>'+o[1]+'</option>';}).join("")+'</select>'
       +'<label style="font-size:12px;display:block;margin-top:6px">Foto 2 — estilo</label><select id="'+px+'_modelo"><option value="destaque">Em destaque / manequim</option><option value="modelo_f">Com modelo — Mulher</option><option value="modelo_m">Com modelo — Homem</option></select>'
+      +'<label style="font-size:12px;display:block;margin-top:6px">Tipo de modelo</label><select id="'+px+'_tipo"><option value="loira">Loira · olhos mel</option><option value="morena">Morena · castanhos</option><option value="ruiva">Ruiva</option></select>'
       +'<div id="'+px+'_modaopts" style="margin-top:6px'+(ehmoda?'':';display:none')+'">'
       +'<label style="font-size:12px;display:block">Manequim</label><select id="'+px+'_manq"><option value="infantil">Infantil</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option></select>'
       +'<label style="font-size:12px;display:block;margin-top:6px">A peça é</label><select id="'+px+'_parte"><option value="inteiro">Look inteiro</option><option value="cima">Parte de cima</option><option value="baixo">Parte de baixo</option></select>'
@@ -320,12 +322,12 @@ function fotoField(px,n,cat,cur){
     +'<button type="button" class="sec mini btnia" data-px="'+px+'" data-n="'+n+'" style="margin-top:6px">✨ Tratar no estilo do catálogo (IA)</button>'
     +'<div class="iamsg" id="'+px+'_iamsg'+n+'" style="font-size:11.5px;color:#6d5137;margin-top:4px"></div>'+'<button type="button" class="sec mini btnia" data-px="'+px+'" data-n="'+n+'" style="margin-top:4px;display:none" id="'+px+'_regen'+n+'">🔁 Gerar outra opção</button>'+'<img class="aiprev" id="'+px+'_prev'+n+'" alt="" style="display:none">');
 }
-async function tratarFotoIA(dataUrl,cat,n,prod,manq,parte,estilo,comModelo){
+async function tratarFotoIA(dataUrl,cat,n,prod,manq,parte,estilo,comModelo,modelo){
   const {data:sess}=await db.auth.getSession();
   const token=(sess&&sess.session)?sess.session.access_token:"";
   const r=await fetch(SB_URL+"/functions/v1/tratar-foto",{method:"POST",
     headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+token},
-    body:JSON.stringify({image:dataUrl,categoria:cat,foto:n,prod2:prod||"",manq:manq||"",parte:parte||"",estilo:estilo||"",comModelo:comModelo?"1":"0"})});
+    body:JSON.stringify({image:dataUrl,categoria:cat,foto:n,prod2:prod||"",manq:manq||"",parte:parte||"",estilo:estilo||"",comModelo:comModelo?"1":"0",modelo:modelo||"loira"})});
   const j=await r.json().catch(()=>({}));
   if(!r.ok||j.error||!j.image)throw new Error(j.error||("Erro "+r.status));
   return j.image;
@@ -347,7 +349,8 @@ document.addEventListener("click",async function(e){
     var mv=(n===2&&$(px+"_modelo"))?$(px+"_modelo").value:"destaque";
     var comModelo=(mv!=="destaque");
     if(comModelo)manq=(mv==="modelo_m")?"masculino":"feminino";
-    var treated=await tratarFotoIA(dataUrl,cat,n,prod,manq,parte,estilo,comModelo);
+    var tipoM=(n===2&&$(px+"_tipo"))?$(px+"_tipo").value:"loira";
+    var treated=await tratarFotoIA(dataUrl,cat,n,prod,manq,parte,estilo,comModelo,tipoM);
     AI_FOTO[px][n]=treated;PREVFOTO[px][n]=treated;atualizarPrev(px);
     var rg=$(px+"_regen"+n);if(rg)rg.style.display="inline-block";
     if(msg)msg.innerHTML='<span class="ok">✓ Foto tratada! Veja a prévia abaixo. Não gostou? Clique em "Gerar outra opção".</span>';
@@ -815,7 +818,7 @@ async function gerarFotosExpr(){
   EXPR.img1=await tratarFotoIA(src,cat,1,"","","","");if($("exprPrev1"))$("exprPrev1").src=EXPR.img1;
   $("exprGerMsg").textContent="Gerando Foto 2...";$("exprBar2").style.width="85%";
   var mv=$("exprModelo")?$("exprModelo").value:"destaque";var comModelo=(mv!=="destaque");var manq2=comModelo?(mv==="modelo_m"?"masculino":"feminino"):manqDe(j.sub);
-  EXPR.img2=await tratarFotoIA(src,cat,2,prodDe(cat),manq2,j.parte||"inteiro",(($("exprEstilo")&&$("exprEstilo").value)||j.estilo||"casual"),comModelo);if($("exprPrev2"))$("exprPrev2").src=EXPR.img2;
+  EXPR.img2=await tratarFotoIA(src,cat,2,prodDe(cat),manq2,j.parte||"inteiro",(($("exprEstilo")&&$("exprEstilo").value)||j.estilo||"casual"),comModelo,(($("exprTipo")&&$("exprTipo").value)||"loira"));if($("exprPrev2"))$("exprPrev2").src=EXPR.img2;
   $("exprBar2").style.width="100%";
 }
 (function(){
@@ -853,7 +856,7 @@ async function gerarFotosExpr(){
     gb.disabled=false;
   });
   var r1=$("exprRe1");if(r1)r1.addEventListener("click",async function(){r1.disabled=true;r1.textContent="Gerando...";try{EXPR.img1=await tratarFotoIA(EXPR.src,$("exprCat").value,1,"","","","");$("exprPrev1").src=EXPR.img1;}catch(e){}r1.textContent="🔁 Refazer Foto 1";r1.disabled=false;});
-  var r2=$("exprRe2");if(r2)r2.addEventListener("click",async function(){var j=EXPR.info;r2.disabled=true;r2.textContent="Gerando...";try{var cat=$("exprCat").value;var mv=$("exprModelo")?$("exprModelo").value:"destaque";var comModelo=(mv!=="destaque");var manq2=comModelo?(mv==="modelo_m"?"masculino":"feminino"):manqDe(j.sub);EXPR.img2=await tratarFotoIA(EXPR.src,cat,2,prodDe(cat),manq2,j.parte||"inteiro",(($("exprEstilo")&&$("exprEstilo").value)||j.estilo||"casual"),comModelo);$("exprPrev2").src=EXPR.img2;}catch(e){}r2.textContent="🔁 Refazer Foto 2";r2.disabled=false;});
+  var r2=$("exprRe2");if(r2)r2.addEventListener("click",async function(){var j=EXPR.info;r2.disabled=true;r2.textContent="Gerando...";try{var cat=$("exprCat").value;var mv=$("exprModelo")?$("exprModelo").value:"destaque";var comModelo=(mv!=="destaque");var manq2=comModelo?(mv==="modelo_m"?"masculino":"feminino"):manqDe(j.sub);EXPR.img2=await tratarFotoIA(EXPR.src,cat,2,prodDe(cat),manq2,j.parte||"inteiro",(($("exprEstilo")&&$("exprEstilo").value)||j.estilo||"casual"),comModelo,(($("exprTipo")&&$("exprTipo").value)||"loira"));$("exprPrev2").src=EXPR.img2;}catch(e){}r2.textContent="🔁 Refazer Foto 2";r2.disabled=false;});
   var vb=$("btnExprVoltar");if(vb)vb.addEventListener("click",function(){EXPR={src:null,img1:null,img2:null,info:{}};if($("exprFoto"))$("exprFoto").value="";if($("exprNota"))$("exprNota").value="";["exprPreco","exprRef"].forEach(function(id){if($(id))$(id).value="";});montarExpr();});
   var pb=$("btnExprPub");if(pb)pb.addEventListener("click",async function(){
     var preco=num($("exprPreco").value),tam=($("exprTam").value||"").trim();
