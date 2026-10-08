@@ -39,7 +39,7 @@
   .pctit{font-size:14px;font-weight:700;line-height:1.15}.pccod{font-size:11px;color:#a08a6a;font-weight:700}
   .pcpreco{font-size:16px;font-weight:800;color:var(--verde2)}
   .badge{position:absolute;top:8px;left:8px;font-size:10.5px;font-weight:800;color:#fff;padding:3px 8px;border-radius:8px;letter-spacing:.4px}
-  .b-disponivel{background:var(--verde)}.b-reservado{background:var(--laranja)}.b-vendido{background:var(--vermelho)}
+  .b-disponivel{background:var(--verde)}.b-reservado{background:var(--laranja)}.b-vendido{background:var(--vermelho)}.b-pendente{background:#c08a1e}.b-recusada{background:#8a8a8a}.tribadge{display:inline-block;min-width:16px;margin-left:4px;padding:0 5px;border-radius:9px;background:var(--vermelho);color:#fff;font-size:10px;font-weight:800;vertical-align:top;line-height:16px}.tribadge:empty{display:none}
   .pcacts{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.pcacts button{flex:1 1 auto}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
   .kpi{background:var(--card);border-radius:12px;padding:12px 14px;box-shadow:0 3px 10px rgba(74,53,38,.12)}
@@ -130,6 +130,7 @@
       <button class="tab" data-tab="vendas">🧾 Vendas</button>
       <button class="tab" data-tab="add">➕ Adicionar peça</button>
       <button class="tab" data-tab="expr">⚡ Expresso</button>
+      <button class="tab admin-only hid" data-tab="triagem">🔎 Triagem<span id="triBadge" class="tribadge"></span></button>
       <button class="tab admin-only hid" data-tab="fornec">🏪 Fornecedores</button>
     </div>
 
@@ -139,7 +140,7 @@
         <div><label>Buscar</label><input id="fBusca" placeholder="título, código..."></div>
         <div><label>Categoria</label><select id="fCat"></select></div>
         <div><label>Situação</label><select id="fStatus">
-          <option value="">Todas</option><option value="disponivel">Disponíveis</option>
+          <option value="">Todas</option><option value="pendente">⏳ Pendentes</option><option value="disponivel">Disponíveis</option>
           <option value="reservado">Reservadas</option><option value="vendido">Vendidas</option></select></div>
         <div class="admin-only hid" id="fFornWrap"><label>Fornecedor</label><select id="fForn"></select></div>
         <div style="flex:0 0 auto"><label>&nbsp;</label><button class="sec mini" id="btnReload">🔄 Atualizar</button></div>
@@ -147,6 +148,14 @@
       <div class="sub" id="pecasCount" style="margin-bottom:8px"></div>
       <div id="pecasLista" class="lista"></div>
       <div id="pecasVazio" class="empty hid">Nenhuma peça encontrada com esse filtro.</div>
+    </div>
+
+    <!-- TRIAGEM (admin) -->
+    <div id="tab-triagem" class="hid">
+      <div class="sub" style="margin-bottom:8px">Peças enviadas pelos fornecedores aguardando sua aprovação. <b>Nada entra na vitrine antes de você aprovar.</b></div>
+      <div class="sub" id="triCount" style="margin-bottom:8px"></div>
+      <div id="triLista" class="lista"></div>
+      <div id="triVazio" class="empty hid">Nenhuma peça aguardando triagem. 🎉</div>
     </div>
 
     <!-- VENDAS -->
@@ -257,7 +266,7 @@ const CAT3={moda:"MOD",uniforme:"UNI",sapatos:"SAP",acessorios:"ACE",objetos:"OB
 function semAcento(x){return String(x==null?"":x).normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
 function skuDe(p){var cat=CAT3[p.categoria]||"PEC";var cor=p.cor?semAcento(p.cor).toUpperCase().replace(/[^A-Z]/g,"").slice(0,4):"";var m=/(\d+)\s*$/.exec(p.codigo||"");var seq=(m?m[1]:"0").slice(-3).padStart(3,"0");return "TH-"+cat+(cor?"-"+cor:"")+"-"+seq;}
 document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".btnmerc");if(!b)return;e.preventDefault();var px=b.getAttribute("data-px");var el=$(px+"_titulo");var t=(el&&el.value||"").trim();if(!t){alert("Preencha o título da peça primeiro.");return;}var q=encodeURIComponent(t);window.open("https://lista.mercadolivre.com.br/"+q,"_blank");window.open("https://www.google.com/search?tbm=shop&q="+q,"_blank");});
-const STATUS=[["disponivel","Disponível"],["reservado","Reservada"],["vendido","Vendida"]];
+const STATUS=[["pendente","Pendente"],["disponivel","Disponível"],["reservado","Reservada"],["vendido","Vendida"],["recusada","Recusada"]];
 
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function attr(v){return String(v==null?"":v).replace(/"/g,"&quot;");}
@@ -459,6 +468,7 @@ async function carregarMeuPerfil(user){
   try{const {data}=await db.from("fornecedores").select("id,is_admin").eq("user_id",user.id).maybeSingle();
     if(data){MEU_FORN=data.id;SOU_ADMIN=!!data.is_admin;}}catch(e){}
   document.querySelectorAll(".admin-only").forEach(el=>el.classList.toggle("hid",!SOU_ADMIN));
+  if(SOU_ADMIN)atualizarTriBadge();
   await carregarFornsSelect();
 }
 
@@ -471,9 +481,11 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   $("tab-add").classList.toggle("hid",k!=="add");
   $("tab-fornec").classList.toggle("hid",k!=="fornec");
   $("tab-expr").classList.toggle("hid",k!=="expr");
+  $("tab-triagem").classList.toggle("hid",k!=="triagem");
   if(k==="vendas")carregarVendas();
   if(k==="fornec")carregarFornecedores();
   if(k==="expr")montarExpr();
+  if(k==="triagem")carregarTriagem();
 }));
 
 /* ---- preview: listeners delegados ---- */
@@ -497,7 +509,7 @@ async function carregarPecas(){
   $("pecasLista").innerHTML='<div class="spin"></div>';$("pecasVazio").classList.add("hid");
   const {data,error}=await db.from("pecas").select("*").order("criado_em",{ascending:false});
   if(error){$("pecasLista").innerHTML='<div class="err">Erro ao carregar: '+esc(error.message)+'</div>';return;}
-  PECAS=data||[];renderPecas();
+  PECAS=data||[];renderPecas();if(SOU_ADMIN)atualizarTriBadge();
 }
 $("btnReload").addEventListener("click",carregarPecas);
 ["fBusca","fCat","fStatus","fForn"].forEach(id=>{var el=$(id);if(el)el.addEventListener("input",renderPecas);});
@@ -535,11 +547,57 @@ async function mudarStatus(cod,status){
   var p=PECAS.find(x=>x.codigo===cod);if(p)p.status=status;renderPecas();
 }
 
+/* ---- TRIAGEM (admin) ---- */
+let TRIAGEM=[];
+async function atualizarTriBadge(){
+  if(!SOU_ADMIN){var b0=$("triBadge");if(b0)b0.textContent="";return;}
+  try{const {count}=await db.from("pecas").select("codigo",{count:"exact",head:true}).eq("status","pendente");
+    var b1=$("triBadge");if(b1)b1.textContent=(count&&count>0)?String(count):"";}catch(e){}
+}
+async function carregarTriagem(){
+  if(!SOU_ADMIN){$("triLista").innerHTML='<div class="err">Só a administração faz triagem.</div>';return;}
+  $("triLista").innerHTML='<div class="spin"></div>';$("triVazio").classList.add("hid");
+  const {data,error}=await db.from("pecas").select("*").eq("status","pendente").order("criado_em",{ascending:false});
+  if(error){$("triLista").innerHTML='<div class="err">Erro: '+esc(error.message)+'</div>';return;}
+  TRIAGEM=data||[];renderTriagem();atualizarTriBadge();
+}
+function renderTriagem(){
+  var arr=TRIAGEM;
+  $("triCount").textContent=arr.length+" peça(s) aguardando aprovação";
+  $("triVazio").classList.toggle("hid",arr.length>0);
+  $("triLista").innerHTML=arr.map(function(p){
+    var thumb=p.categoria==="livros"?p.foto1:(p.foto2||p.foto1);
+    var img=thumb?('<img class="pcimg" loading="lazy" src="'+esc(fotoURL(thumb,true))+'">'):'<div class="pcimg"></div>';
+    var val=Number(p.preco)||0,ph=val?preco(val):"a combinar";
+    return '<div class="pc"><span class="badge b-pendente">PENDENTE</span>'+img
+      +'<div class="pcb"><div class="pctit">'+esc(p.titulo)+'</div>'
+      +'<div class="pccod">'+esc(p.codigo)+' · '+esc(CATNOME[p.categoria]||p.categoria||"")+'</div>'
+      +'<div class="pccod" style="color:#8a6f52">🏪 '+esc(FORNNOME[p.fornecedor_id]||"—")+'</div>'
+      +'<div class="pccod" style="opacity:.8">Tam: '+esc(p.tamanho||"—")+(p.cor?' · '+esc(p.cor):"")+'</div>'
+      +'<div class="pcpreco">'+ph+'</div>'
+      +'<div class="pcacts"><button class="mini" data-tri="aprovar" data-cod="'+esc(p.codigo)+'">✓ Aprovar</button>'
+      +'<button class="mini sec" data-tri="editar" data-cod="'+esc(p.codigo)+'">✎ Editar</button>'
+      +'<button class="mini sec" style="color:var(--vermelho)" data-tri="recusar" data-cod="'+esc(p.codigo)+'">✕ Recusar</button></div></div></div>';
+  }).join("");
+}
+$("triLista").addEventListener("click",async function(e){
+  var b=e.target.closest("button[data-tri]");if(!b)return;
+  var cod=b.getAttribute("data-cod"),act=b.getAttribute("data-tri");
+  if(act==="editar")return abrirEditor(cod);
+  if(act==="recusar"&&!confirm("Recusar esta peça? Ela não vai para a vitrine."))return;
+  b.disabled=true;
+  var patch=(act==="aprovar")?{status:"disponivel",disponivel:true}:{status:"recusada",disponivel:false};
+  const {error}=await db.from("pecas").update(patch).eq("codigo",cod);
+  if(error){alert("Erro: "+error.message);b.disabled=false;return;}
+  TRIAGEM=TRIAGEM.filter(function(x){return x.codigo!==cod;});
+  renderTriagem();atualizarTriBadge();
+});
+
 /* ---- EDITOR ---- */
 function fecharModal(){$("ov").classList.add("hid");$("modal").classList.add("hid");$("modal").innerHTML="";}
 $("ov").addEventListener("click",fecharModal);
 function abrirEditor(cod){
-  var p=PECAS.find(x=>x.codigo===cod);if(!p)return;
+  var p=PECAS.find(x=>x.codigo===cod)||TRIAGEM.find(x=>x.codigo===cod);if(!p)return;
   EDIT_CAT=p.categoria;EDIT_COD=p.codigo;
   PREVFOTO.e={1:p.foto1?fotoURL(p.foto1,true):null,2:p.foto2?fotoURL(p.foto2,true):null};AI_FOTO.e={1:null,2:null};
   $("modal").innerHTML='<h2>✎ Editar peça</h2><div class="sub" style="margin-bottom:10px">'+esc(p.codigo)+' · '+esc(CATNOME[p.categoria]||p.categoria)+'</div>'
@@ -647,7 +705,7 @@ $("btnAdd").addEventListener("click",async()=>{
     const {error}=await db.from("pecas").upsert(row,{onConflict:"codigo"});
     if(error)throw new Error("banco: "+error.message);
     $("addBar").style.width="100%";
-    $("addMsg").innerHTML='<span class="ok">✓ Peça '+esc(codigo)+' adicionada! Já está na vitrine.</span>';
+    $("addMsg").innerHTML='<span class="ok">✓ Peça '+esc(codigo)+(SOU_ADMIN?' adicionada! Já está na vitrine.':' enviada! Aguardando aprovação da administração para entrar na vitrine.')+'</span>';
     ADD_PREFILL=null;AI_FOTO.a={1:null,2:null};montarAdd();carregarPecas();
     setTimeout(()=>{$("addBar").style.width="0"},1500);
   }catch(e){$("addMsg").innerHTML='<span class="err">✗ '+esc(e.message)+'</span>';}
@@ -812,7 +870,7 @@ async function gerarFotosExpr(){
       if(EXPR.img2&&cat!=="livros")row.foto2=await subirFotoPath(codigo+"-2",EXPR.img2);
       const {error}=await db.from("pecas").upsert(row,{onConflict:"codigo"});
       if(error)throw new Error(error.message);
-      $("exprPubMsg").innerHTML='<span class="ok">✓ Anúncio '+esc(codigo)+' publicado! Já está na vitrine.</span>';
+      $("exprPubMsg").innerHTML='<span class="ok">✓ Anúncio '+esc(codigo)+(SOU_ADMIN?' publicado! Já está na vitrine.':' enviado! Aguardando aprovação da administração.')+'</span>';
       EXPR={src:null,img1:null,img2:null,info:{}};
       if($("exprFoto"))$("exprFoto").value="";if($("exprNota"))$("exprNota").value="";
       ["exprPreco","exprRef","exprTam","exprTit","exprDesc","exprCor"].forEach(function(id){if($(id))$(id).value="";});
