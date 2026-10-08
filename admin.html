@@ -221,7 +221,7 @@
           <div class="fld"><label>Preço de venda (R$) *</label><input id="exprPreco" placeholder="30,00"></div>
           <div class="fld"><label>Preço de referência / novo (R$, opcional)</label><input id="exprRef" placeholder="60,00"></div>
         </div>
-        <div class="fld" style="margin-top:8px"><label>Foto 2 — estilo</label><select id="exprModelo"><option value="destaque">Em destaque (só a peça / manequim)</option><option value="modelo">Com modelo (adulto)</option></select></div>
+        <div class="fld" style="margin-top:8px"><label>Foto 2 — estilo</label><select id="exprModelo"><option value="destaque">Em destaque (só a peça / manequim)</option><option value="modelo_f">Com modelo — Mulher (adulto)</option><option value="modelo_m">Com modelo — Homem (adulto)</option></select></div>
         <button id="btnExprGerar" style="margin-top:12px;width:100%">✨ Gerar as 2 fotos de catálogo</button>
         <div class="bar"><i id="exprBar2"></i></div>
         <div id="exprGerMsg" class="msg"></div>
@@ -299,7 +299,7 @@ function fotoField(px,n,cat,cur){
   if(n===2){var ops=[["moda","Moda — manequim invisível + look"],["acessorio","Acessório — em destaque"],["brinquedo","Brinquedo — cena lúdica"],["sapatos","Calçado — em destaque"],["objeto","Objeto — em destaque"]];
     var ehmoda=prodDe(cat)==="moda";
     prodsel='<label style="font-size:12px;margin-top:6px;display:block">Produção da Foto 2</label><select id="'+px+'_prod2" onchange="toggleModaOpts(\''+px+'\')">'+ops.map(function(o){return '<option value="'+o[0]+'"'+(prodDe(cat)===o[0]?" selected":"")+'>'+o[1]+'</option>';}).join("")+'</select>'
-      +'<label style="font-size:12px;display:block;margin-top:6px">Foto 2 — estilo</label><select id="'+px+'_modelo"><option value="destaque">Em destaque / manequim</option><option value="modelo">Com modelo (adulto)</option></select>'
+      +'<label style="font-size:12px;display:block;margin-top:6px">Foto 2 — estilo</label><select id="'+px+'_modelo"><option value="destaque">Em destaque / manequim</option><option value="modelo_f">Com modelo — Mulher</option><option value="modelo_m">Com modelo — Homem</option></select>'
       +'<div id="'+px+'_modaopts" style="margin-top:6px'+(ehmoda?'':';display:none')+'">'
       +'<label style="font-size:12px;display:block">Manequim</label><select id="'+px+'_manq"><option value="infantil">Infantil</option><option value="feminino">Feminino</option><option value="masculino">Masculino</option></select>'
       +'<label style="font-size:12px;display:block;margin-top:6px">A peça é</label><select id="'+px+'_parte"><option value="inteiro">Look inteiro</option><option value="cima">Parte de cima</option><option value="baixo">Parte de baixo</option></select>'
@@ -334,7 +334,9 @@ document.addEventListener("click",async function(e){
     var manq=(n===2&&$(px+"_manq"))?$(px+"_manq").value:"";
     var parte=(n===2&&$(px+"_parte"))?$(px+"_parte").value:"";
     var estilo=(n===2&&$(px+"_estilo"))?$(px+"_estilo").value:"";
-    var comModelo=(n===2&&$(px+"_modelo")&&$(px+"_modelo").value==="modelo");
+    var mv=(n===2&&$(px+"_modelo"))?$(px+"_modelo").value:"destaque";
+    var comModelo=(mv!=="destaque");
+    if(comModelo)manq=(mv==="modelo_m")?"masculino":"feminino";
     var treated=await tratarFotoIA(dataUrl,cat,n,prod,manq,parte,estilo,comModelo);
     AI_FOTO[px][n]=treated;PREVFOTO[px][n]=treated;atualizarPrev(px);
     var rg=$(px+"_regen"+n);if(rg)rg.style.display="inline-block";
@@ -753,8 +755,8 @@ async function gerarFotosExpr(){
   $("exprGerMsg").textContent="Gerando Foto 1 (chão)...";$("exprBar2").style.width="50%";
   EXPR.img1=await tratarFotoIA(src,cat,1,"","","","");if($("exprPrev1"))$("exprPrev1").src=EXPR.img1;
   $("exprGerMsg").textContent="Gerando Foto 2...";$("exprBar2").style.width="85%";
-  var comModelo=($("exprModelo")&&$("exprModelo").value==="modelo");
-  EXPR.img2=await tratarFotoIA(src,cat,2,prodDe(cat),manqDe(j.sub),j.parte||"inteiro",j.estilo||"casual",comModelo);if($("exprPrev2"))$("exprPrev2").src=EXPR.img2;
+  var mv=$("exprModelo")?$("exprModelo").value:"destaque";var comModelo=(mv!=="destaque");var manq2=comModelo?(mv==="modelo_m"?"masculino":"feminino"):manqDe(j.sub);
+  EXPR.img2=await tratarFotoIA(src,cat,2,prodDe(cat),manq2,j.parte||"inteiro",j.estilo||"casual",comModelo);if($("exprPrev2"))$("exprPrev2").src=EXPR.img2;
   $("exprBar2").style.width="100%";
 }
 (function(){
@@ -766,7 +768,7 @@ async function gerarFotosExpr(){
       EXPR.src=await fileToDataURL(fl);EXPR.img1=null;EXPR.img2=null;
       var j=await analisarPeca(EXPR.src,$("exprNota")?$("exprNota").value:"");EXPR.info=j;
       if($("exprCat"))$("exprCat").value=j.categoria;
-      if($("exprModelo"))$("exprModelo").value=(j.categoria==="acessorios")?"modelo":"destaque";
+      if($("exprModelo"))$("exprModelo").value=(j.categoria==="acessorios")?"modelo_f":"destaque";
       if($("exprTit"))$("exprTit").value=j.titulo||"";
       if($("exprDesc"))$("exprDesc").value=j.descricao||"";
       if($("exprCor"))$("exprCor").value=j.cor||"";
@@ -791,7 +793,7 @@ async function gerarFotosExpr(){
     gb.disabled=false;
   });
   var r1=$("exprRe1");if(r1)r1.addEventListener("click",async function(){r1.disabled=true;r1.textContent="Gerando...";try{EXPR.img1=await tratarFotoIA(EXPR.src,$("exprCat").value,1,"","","","");$("exprPrev1").src=EXPR.img1;}catch(e){}r1.textContent="🔁 Refazer Foto 1";r1.disabled=false;});
-  var r2=$("exprRe2");if(r2)r2.addEventListener("click",async function(){var j=EXPR.info;r2.disabled=true;r2.textContent="Gerando...";try{var cat=$("exprCat").value;var comModelo=($("exprModelo")&&$("exprModelo").value==="modelo");EXPR.img2=await tratarFotoIA(EXPR.src,cat,2,prodDe(cat),manqDe(j.sub),j.parte||"inteiro",j.estilo||"casual",comModelo);$("exprPrev2").src=EXPR.img2;}catch(e){}r2.textContent="🔁 Refazer Foto 2";r2.disabled=false;});
+  var r2=$("exprRe2");if(r2)r2.addEventListener("click",async function(){var j=EXPR.info;r2.disabled=true;r2.textContent="Gerando...";try{var cat=$("exprCat").value;var mv=$("exprModelo")?$("exprModelo").value:"destaque";var comModelo=(mv!=="destaque");var manq2=comModelo?(mv==="modelo_m"?"masculino":"feminino"):manqDe(j.sub);EXPR.img2=await tratarFotoIA(EXPR.src,cat,2,prodDe(cat),manq2,j.parte||"inteiro",j.estilo||"casual",comModelo);$("exprPrev2").src=EXPR.img2;}catch(e){}r2.textContent="🔁 Refazer Foto 2";r2.disabled=false;});
   var vb=$("btnExprVoltar");if(vb)vb.addEventListener("click",function(){EXPR={src:null,img1:null,img2:null,info:{}};if($("exprFoto"))$("exprFoto").value="";if($("exprNota"))$("exprNota").value="";["exprPreco","exprRef"].forEach(function(id){if($(id))$(id).value="";});montarExpr();});
   var pb=$("btnExprPub");if(pb)pb.addEventListener("click",async function(){
     var preco=num($("exprPreco").value),tam=($("exprTam").value||"").trim();
